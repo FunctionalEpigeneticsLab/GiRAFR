@@ -1,0 +1,12 @@
+####input information
+
+
+
+[configFile]
+samtools=/data/leuven/334/vsc33470/miniconda3/bin/samtools
+bam_file=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep/gRNA.bam
+barcode=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep/barcodes.tsv
+output_dir=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep
+ref_fasta=oligo_pool_plasmid.fa
+structure_gtf=oligo_pool_plasmid_structure.gtf
+
