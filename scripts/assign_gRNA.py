@@ -31,14 +31,16 @@ def assign_gRNA_to_cell(in_file, min_umi, output_dir):
 					cells[cb] = {gRNA: {'WT': 1}}
 
 				else:
-					gRNA_type = gRNA_type.split(':')[0]
+					#gRNA_type = gRNA_type.split(':')[0] # can have problem if gene name has ':'
+					gRNA_type = ':'.join(gRNA_type.split(':')[0:-1]) 
 					cells[cb] = {gRNA: {gRNA_type: 1}}
 			else:
 				if gRNA not in cells[cb].keys():
 					if gRNA_type == 'WildType':
 						cells[cb][gRNA] = {'WT': 1}
 					else:
-						gRNA_type = gRNA_type.split(':')[0]
+						#gRNA_type = gRNA_type.split(':')[0]
+						gRNA_type = ':'.join(gRNA_type.split(':')[0:-1])
 						cells[cb][gRNA] = {gRNA_type: 1}
 				else:
 					if gRNA_type == 'WildType':
@@ -47,7 +49,8 @@ def assign_gRNA_to_cell(in_file, min_umi, output_dir):
 						else:
 							cells[cb][gRNA]['WT'] += 1
 					else:
-						gRNA_type = gRNA_type.split(':')[0]
+						#gRNA_type = gRNA_type.split(':')[0]
+						gRNA_type = ':'.join(gRNA_type.split(':')[0:-1])
 						if gRNA_type not in cells[cb][gRNA].keys():
 							cells[cb][gRNA][gRNA_type] = 1
 						else:
@@ -87,14 +90,17 @@ def assign_gRNA_to_cell(in_file, min_umi, output_dir):
 							out2.write(cb + '\t' + str(n_gRNA) + '\t' + gRNA_type + '\t'+ str(cells[cb][gRNA][gRNA_type]) + '\n')
 
 
-def add_variant_type(in_file1, in_file2, structure_gtf, output_dir):
+def add_variant_type(in_file1, in_file2, in_file3, structure_gtf, output_dir):
 	"""
 	Arg:
 		in_file1: consensus.sequence.gRNA.variant.txt
 		in_file2: cells.gRNA.single.txt
+		in_file3: cells.gRNA.txt
 
 	Return:
-		Write cells.gRNA.single.MT.txt, MT.txt
+		Write cells.gRNA.single.MT.txt
+		MT.txt
+		all.MT.txt: Number of variants can be less than cells.gRNA.txt as softclipping ones are not counted here.
 	"""
 	variants = {}
 	with open(in_file1, 'r') as fi:
@@ -107,7 +113,8 @@ def add_variant_type(in_file1, in_file2, structure_gtf, output_dir):
 			gRNA_type = ls[9]
 			if gRNA_type != 'WildType':
 				if len(ls) < 11: continue # TODO,for variant like 90M1S, soft  cliping here is skipped
-				gRNA = gRNA_type.split(':')[0]
+				#gRNA = gRNA_type.split(':')[0] # can have problem if gene name has ':'
+				gRNA = ':'.join(gRNA_type.split(':')[0:-1])
 				gRNA_MT = ls[10]
 			else:
 				gRNA = gRNA + '_WT' # ALKBH1_gRNA1_gene_WT
@@ -117,6 +124,11 @@ def add_variant_type(in_file1, in_file2, structure_gtf, output_dir):
 				variants[gRNA] = [gRNA_MT, seq]
 			else:
 				if variants[gRNA][0] != gRNA_MT or variants[gRNA][1] != seq:
+					print('gRNA', gRNA)
+					print('variants[gRNA][0]:',variants[gRNA][0])
+					print('gRNA_MT', gRNA_MT)
+					print('variants[gRNA][1]', variants[gRNA][1])
+					print('seq', seq)
 					print('records do not match')
 					exit()
 				else:
@@ -127,6 +139,7 @@ def add_variant_type(in_file1, in_file2, structure_gtf, output_dir):
 
 	out1 = open(output_dir + 'cells.gRNA.single.MT.txt','w')
 	out2 = open(output_dir + 'MT.txt', 'w')	
+	out3 = open(output_dir + 'all.MT.txt', 'w')	
 	with open(in_file2, 'r') as fi:
 		for l in fi:
 			ls = l.strip().split()
@@ -151,3 +164,28 @@ def add_variant_type(in_file1, in_file2, structure_gtf, output_dir):
 					length = int(structure[gRNA_gene][s][2]) - int(structure[gRNA_gene][s][1]) + 1
 					out_line = gRNA_gene + '\t' + s + '\t'+ str(length) + '\t'+ str(relative_pos) + '\t' + mutation + '\t' + gRNA
 					out2.write(out_line + '\n')
+
+	with open(in_file3, 'r') as fi:
+		for l in fi:
+			ls = l.strip().split()
+			if len(ls) == 5: # only WT
+				continue
+			gRNA = ls[5]
+			
+			if gRNA not in variants: #TODO, CHD1L_gRNA2_gene_variant_20  64M27S
+				continue
+			else:
+				mutation = variants[gRNA][0] # gRNA:6I(1),Rest:8D(1)
+				if bool(re.search('_WT', gRNA)):
+					continue
+				gRNA_gene = re.split('_variant', gRNA)[0]
+				mutations = mutation.split(',')
+				for m in mutations:
+					s =  m.split(':')[0]
+					relative_pos = int(re.findall('(\d+)(.+)',m.split(':')[1])[0][0]) + 1
+					mutation = re.findall('(\d+)(.+)',m.split(':')[1])[0][1]
+					length = int(structure[gRNA_gene][s][2]) - int(structure[gRNA_gene][s][1]) + 1
+					out_line = gRNA_gene + '\t' + s + '\t'+ str(length) + '\t'+ str(relative_pos) + '\t' + mutation + '\t' + gRNA
+					out3.write(out_line + '\n')
+				
+				variants.pop(gRNA) # remove the gRNA variant which has been written

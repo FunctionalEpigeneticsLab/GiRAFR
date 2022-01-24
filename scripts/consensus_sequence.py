@@ -72,6 +72,7 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 			else:
 				gene_mapped = 'multiple gene'    # for UMI mapped to multiple gene, use most high quality one? #TODO
 			result = str(cb) + "\t" + str(umi) + "\t" + str(len(dict_2d[cb].keys())) + "\t" + str(len(dict_2d[cb][umi])) + "\t" + str(umi_class) + "\t"+ str(max_seq) + "\t" + str(dict_umi_seq[max_seq][0]) + "\t" + str(dict_umi_seq[max_seq][1]) + "\t" + str(gene_mapped) + "\n"
+
 			out.write(result) # write consensus.seqeunce.gRNA.txt
 
 			consensus_seq = str(max_seq)

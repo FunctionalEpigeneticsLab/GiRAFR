@@ -5,6 +5,7 @@ import os
 import subprocess
 import re
 from Bio import SeqIO
+import pandas as pd
 import configparser
 
 def create_bam_infile(file_name):
@@ -274,7 +275,10 @@ def write_annotation(oligo_pool, output_fasta, output_gtf, output_gtf2):
 	Datlinger, P., Rendeiro, A. F., Schmidl, C., Krausgruber, T., Traxler, P., Klughammer, J., Schuster, L. C., Kuchler, A., Alpar, D., & Bock, C. (2017). Pooled CRISPR screening with single-cell transcriptome readout. Nature Methods, 14(3), 297301. https://doi.org/10.1038/nmeth.4177
 
 	Arg:
-		annotation.csv: oligo_name, sequence
+		annotation.csv: oligo_name, sequence no header
+			ALKBH1_gRNA1,TGGAAAGGACGAAACACCGGATTTCCGAGCTGAAGCAGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGC
+			ALKBH1_gRNA2,TGGAAAGGACGAAACACCGACTGCGTGGTTCAAGAGGGTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGC
+
 	Return:
 		oligo_pool_plasmid.fa
 		oligo_pool_plasmid.gtf
@@ -297,8 +301,8 @@ def write_annotation(oligo_pool, output_fasta, output_gtf, output_gtf2):
 	Rest_seq = "TAGTCCGTTATCAACTTGAAAAAGTGGCACCGAGTCGGTGCTTTTTTAAGCTTGGCGTAACTAGATCTTGAGACACTGCTTTTTGCTTGTACTGGGTCTCTCTGGTTAGACCAGATCTGAGCCTGGGAGCTCTCTGGCTAACTAGGGAACCCACTGCTTAAGCCTCAATAAAGCTTGCCTTGAGTGCTTCAAGTAGTGTGTGCCCGTCTGTTGTGTGACTCTGGT"
 
 	for i in df.index:
-		oligo_name = df.ix[i]["oligo_name"]
-		guide_sequence = df.ix[i]["sequence"]
+		oligo_name = df.iloc[i]["oligo_name"]
+		guide_sequence = df.iloc[i]["sequence"]
 
 		# add fasta entry
 		sequence = U6_seq + guide_sequence + Rest_seq
