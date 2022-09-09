@@ -7,6 +7,8 @@ import re
 from Bio import SeqIO
 import pandas as pd
 import configparser
+from sklearn.mixture import GaussianMixture
+import numpy as np
 
 def create_bam_infile(file_name):
 	bam_file = pysam.AlignmentFile(file_name, 'rb')
@@ -22,7 +24,7 @@ def get_read_tag(read, tag):
         if r == '':
             r = None
         return r
-    except KeyError:
+    except KeyError: # tag not found return None
         return None
 
 
@@ -87,10 +89,17 @@ def define_WT(record, is_10x):
 	is_WT = bool
 	q_seq = r.query_sequence
 	cigar = r.cigartuples # 43M1D48M => [(0, 43), (2, 1), (0, 48)]
+	if len(cigar) == 1:
+		cigar_WT = True # wildtype
+	elif set([x[0] for x in cigar]) == set([0,4,5]) or set([x[0] for x in cigar]) == set([0,4]) or set([x[0] for x in cigar]) == set([0,5]): # consider soft cliping and hard cliping
+		cigar_WT = True # cigar_WT is True is not necessary mean no mistmatch, because mismatches are marked as M in bam file. But mismatches will be counted in nM
+	else:
+		cigar_WT = False # mutant
+
 	if (is_10x):
 		nM = r.get_tag('nM') # 10x bam file does not contain MD, therefore, cannot use get_reference_sequence()
 		try:
-			if (nM == 0)  & (len(cigar) == 1):
+			if (nM == 0) and (cigar_WT): # if no mismtach and cigar_WT = True
 				is_WT = True
 			else:
 				is_WT = False
@@ -99,7 +108,7 @@ def define_WT(record, is_10x):
 			print(r)
 	else:
 		r_seq = r.get_reference_sequence()
-		if (q_seq == r_seq) & (len(cigar) == 1):
+		if (q_seq == r_seq) and (cigar_WT):
 			is_WT = True # perfect match
 		else:
 			is_WT = False
@@ -108,17 +117,20 @@ def define_WT(record, is_10x):
 
 
 def compare_two_sequences(seq1, seq2):
+	# mismatch = utils.compare_two_sequences(ref[pos_r: (pos_r+n)], seq[pos_q: (pos_q+n)])
 	# only compare two sequences which have same length
-	# seq1= 'ATGCatcc'
-	# seq2= 'AAGCaTgc'
+	# seq1= 'ATGCatcc' # ref
+	# seq2= 'AAGCaTgc' # query
 	# return 1A4C
 	assert len(seq1) == len(seq2)
-	seq1 = seq1.upper()
+	seq1 = seq1.upper() # reference sequence normally
 	seq2 = seq2.upper()
 	pos = 0
 	out = ''
 	for i in range(0,len(seq1)):
 		if seq1[i] ==  seq2[i]:
+			pos += 1
+		elif seq1[i] == 'N': # When N in reference sequence, report as match no matter for any seq2[i]. 
 			pos += 1
 		else:
 			#if pos == 0:
@@ -170,9 +182,34 @@ def gRNA_bam_filter(input_file, samtools, output_dir):
 	subprocess.call('%s view -S -b %s/tmp.sam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, tmp_dir, output_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, output_dir), shell = True)
 	subprocess.call('rm -r ' + tmp_dir, shell = True)
+
+def detect_PAM(input_file):
+	"""Detect if gRNA_region_coordinates_ori.txt contain protospacer sequence with PAM
+	input_file: gRNA_region_coordinates_ori.txt
 	
+	return: boolean is_PAM
+		is_PAM = True if all protosapcer sequence ended with PAM (5'-NGG-3' for Cas9) else is_PAM = False
+	
+	is_PAM is used later for cutsite determination
+	"""
+	is_PAM = bool 
+	with open(input_file, 'r') as fi:
+		for l in fi:
+			ls = l.strip().split()
+			seq = ls[5]
+			if seq[-2:] == 'GG': # last 2 nt == GG
+				is_PAM = True
+			elif is_PAM == True: # if last protospacer end with GG, send a warning to user. 
+				print("WARNING: not all protospacer sequence given end with PAM or without PAM")
+				print("Please make sure all sgRNAs given in gRNA_region_coordinates_ori.txt end with PAM or all without PAM")
+				print("Continue as all ithout PAM")
+				is_PAM = False	
+				return is_PAM
+			else: # if all sgRNAs are without PAM
+				is_PAM = False
 
-
+	return is_PAM
+	
 
 def detect_editing_effect_input(input_file, out_dir, window_size = 31):
 	"""prepare input file for detecing editing effect
@@ -195,6 +232,12 @@ def detect_editing_effect_input(input_file, out_dir, window_size = 31):
 	fo_name2 = out_dir + '/' +'gRNA_region_coordinates_' + str(window_size) + 'bp.txt'
 	fo2 = open(fo_name2, 'w')
 	fo2.write('#chrom\tstart\tend\tregion_name\tstrand\tgRNA_seq\ttarget_gene\twindow_start\twindow_end\tcut_site\n')
+	
+	is_PAM = detect_PAM(input_file) # if PAM already there, return True. 
+	if is_PAM:
+		print('PAM at the end of protospacer sequence in input file: gRNA_region_coordinates_ori.txt')
+	else:
+		print('no PAM at the end of protospacer sequence in input file: gRNA_region_coordinates_ori.txt')
 
 	window_size = int(window_size)
 	with open(input_file, 'r') as fi:
@@ -209,9 +252,15 @@ def detect_editing_effect_input(input_file, out_dir, window_size = 31):
 			target_gene = ls[6]
 
 			if strand == '+':
-				cut_site =  end - 6
+				if is_PAM: # if protospacer sequence includes PAM as the end
+					cut_site =  end - 6
+				else:
+					cut_site = end - 3
 			elif strand == '-':
-				cut_site = start + 6 - 1
+				if is_PAM:
+					cut_site = start + 6 - 1
+				else:
+					cut_site = start + 3 - 1
 			else:
 				print('invalid strand')
 				exit()
@@ -225,6 +274,7 @@ def detect_editing_effect_input(input_file, out_dir, window_size = 31):
 	print("Generate files:\n" + fo_name1)
 	print(fo_name2)
 	return(fo_name1, fo_name2)
+
 
 def read_barcode(barcode_file):
 
@@ -259,6 +309,9 @@ def read_cell_assignment(cell_file):
 	fi = open(cell_file, 'r')
 	for l in fi:
 		ls = l.strip().split(',')
+		if len(ls) == 1:
+			ls = l.strip().split()
+		assert len(ls) > 1
 		cb = ls[0].replace('-1','')
 		gRNA = ls[2]
 		if cb in KO.keys():
@@ -390,11 +443,37 @@ def get_gRNA_mutation_config():
 	gRNA_bam_file = parser.get('config_gRNA_mutation', 'gRNA_bam_file')
 	barcode = parser.get('config_gRNA_mutation', 'filtered_barcode')
 	output_dir = parser.get('config_gRNA_mutation', 'output_dir')
-	min_umi = int(parser.get('config_gRNA_mutation', 'min_umi'))
+	output_dir = output_dir + '/'
+	try:
+		n_consensus_reads_min = int(parser.get('config_gRNA_mutation', 'min_reads'))
+	except configparser.NoOptionError:
+		n_consensus_reads_min  = 1	
+
+	try:
+		min_umi = int(parser.get('config_gRNA_mutation', 'min_umi'))
+	except configparser.NoOptionError:
+		min_umi = 3 # set default min_umi = 3
+	try:
+		auto = parser.get('config_gRNA_mutation', 'auto')
+		auto = auto.lower() == 'true'
+	except configparser.NoOptionError:
+		auto = False # set default auto as False
+
+	try:
+		pool = parser.get('config_gRNA_mutation', 'pool')
+		pool = pool.lower() == 'true'
+
+	except configparser.NoOptionError:
+		pool = False # set default pool as False
 	
 	ref_fasta = parser.get('config_annotation', 'ref_fasta')
 	structure_gtf = parser.get('config_annotation', 'structure_gtf')
-	return(gRNA_bam_file, barcode, output_dir, min_umi, ref_fasta, structure_gtf)
+	try:
+		is_10x = parser.get('config_annotation', 'is_10x')
+		is_10x = is_10x.lower() == 'true'
+	except configparser.NoOptionError:
+		is_10x = True # set default is_10x as True
+	return(gRNA_bam_file, barcode, output_dir, n_consensus_reads_min, min_umi, auto, pool, ref_fasta, structure_gtf, is_10x)
 
 def get_tools_config():
 	parser = configparser.ConfigParser()
@@ -420,3 +499,79 @@ def get_detect_editing_effect_config():
 	genome_gtf = parser.get('config_annotation', 'genome_gtf')
 
 	return(input_file, bam_file, barcode, cell_file, genome, genome_gtf, output_dir, window_size)
+
+
+def read_consensus_sequence_txt(in_file):
+	"""
+	Process consensus sequence txt file and return dictionary cells: [cb][gRNA]: {gRNA_type: UMI count}
+	Args:
+		consensus.sequence.gRNA.variant.txt
+	Returns:
+		Dictionary cells, cells[list(cells.keys())[0]] = {'HAT1_gRNA3_gene': {'WT': 1}, 'HDAC2_gRNA3_gene': {'WT': 1}, 'CTRL00545_gene': {'CTRL00545_gene_variant_1': 1}, 'RPL18_gRNA1_gene': {'WT': 1}, 'SMARCD1_gRNA4_gene': {'WT': 1}}
+		cb_all, all cell barcodes that consensus.sequence.gRNA.variant.txt has
+		gRNA_all all types of gRNA including mutant type
+	"""
+	cells = {}
+	gRNA_all = []
+	with open(in_file, 'r') as fi:
+		for l in fi:
+			ls = l.strip().split()
+			cb = ls[0]
+			gRNA = ls[8]
+			if gRNA == 'multiple':
+				continue #TODO
+
+			gRNA_type = ls[9] # ALKBH1_gRNA1_gene_variant_1:21M1D21M2D48M
+			
+			if gRNA_type == 'WildType':
+				if gRNA not in gRNA_all:
+					gRNA_all.append(gRNA)
+			else: # gRNA_type is mutant, treat it as different gRNA
+				gRNA_type = ':'.join(gRNA_type.split(':')[0:-1]) #gRNA_type = gRNA_type.split(':')[0] can have problem if gene name has ':'
+				if gRNA_type not in gRNA_all:
+					gRNA_all.append(gRNA_type)
+
+			if cb not in cells.keys():
+				if gRNA_type == 'WildType':
+					cells[cb] = {gRNA: {'WT': 1}}
+                                
+				else:
+					cells[cb] = {gRNA: {gRNA_type: 1}}
+			else:
+				if gRNA not in cells[cb].keys():
+					if gRNA_type == 'WildType':
+						cells[cb][gRNA] = {'WT': 1}
+					else:
+						cells[cb][gRNA] = {gRNA_type: 1}
+				else:
+					if gRNA_type == 'WildType':
+						if 'WT' not in cells[cb][gRNA].keys():
+							cells[cb][gRNA]['WT'] = 1
+						else:
+							cells[cb][gRNA]['WT'] += 1
+					else:
+						if gRNA_type not in cells[cb][gRNA].keys():
+							cells[cb][gRNA][gRNA_type] = 1
+						else:
+							cells[cb][gRNA][gRNA_type] += 1
+	fi.close()
+
+	cb_all = list(cells.keys())
+	return(cells, cb_all, gRNA_all)
+
+
+def fit_gmm(log_umi):
+	"""
+		Fit gaussian mixture model using scikit learn gaussianmixture
+		fit 2 components 1-D univariate gaussian mixture model
+	Args:
+		log_umi: np.arrary
+
+	Return:
+		gmm: gmm object 
+	"""
+	gmm = GaussianMixture(n_components=2, covariance_type='tied').fit(log_umi)
+	
+	return gmm
+
+

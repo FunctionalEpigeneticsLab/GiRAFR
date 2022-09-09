@@ -5,14 +5,19 @@ import utils
 import sys
 import pysam
 
-def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x = True):
-	"""Generate consensus sequence for gRNA library
+def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_consensus_reads_min = 1, is_10x = True):
+	"""
+	########### gRNA consensus sequence ########
+	Generate consensus sequence for gRNA library
 
 	Arg:
 		bam_in: bam file, alignment file of gRNA library after removed secondary alignment and mapped not on gRNA reference
 		barcodes: filtered barcode list
 	return:
-		Write consensus.sequence.gRNA.txt, consensus.bam
+		Write consensus.sequence.gRNA.txt: consensus sequence supported by column 7 (n_consensus_reads) > 1
+		      consensus.bam: consensus sequence in bam file format
+		Wirte consensus.seqeunce.gRNA.all_umi.txt: all UMI detected consensus sequence 
+		      Non-consensus.bam: alignment not the same as consensus sequence
 
 	"""
 	cb_tag = 'CB' if is_10x else 'XC'
@@ -22,7 +27,9 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 	barcodes = utils.read_barcode(barcode_in) # filtered barcode in list
 	bam_in = utils.create_bam_infile(bam_in_file)
 	out_file = output_dir + 'consensus.sequence.gRNA.txt'
+	out_file2 = output_dir + 'consensus.sequence.gRNA.all_umi.txt'
 	out = open(out_file,'w')
+	out2 = open(out_file2, 'w')
 
 	dict_2d={}
 	# Read all records
@@ -71,9 +78,13 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 				gene_mapped = str(list(gene.keys())[0])
 			else:
 				gene_mapped = 'multiple gene'    # for UMI mapped to multiple gene, use most high quality one? #TODO
-			result = str(cb) + "\t" + str(umi) + "\t" + str(len(dict_2d[cb].keys())) + "\t" + str(len(dict_2d[cb][umi])) + "\t" + str(umi_class) + "\t"+ str(max_seq) + "\t" + str(dict_umi_seq[max_seq][0]) + "\t" + str(dict_umi_seq[max_seq][1]) + "\t" + str(gene_mapped) + "\n"
 
-			out.write(result) # write consensus.seqeunce.gRNA.txt
+			n_consensus_reads = dict_umi_seq[max_seq][0] # number of reads that support consensus sequence
+			result = str(cb) + "\t" + str(umi) + "\t" + str(len(dict_2d[cb].keys())) + "\t" + str(len(dict_2d[cb][umi])) + "\t" + str(umi_class) + "\t"+ str(max_seq) + "\t" + str(n_consensus_reads) + "\t" + str(dict_umi_seq[max_seq][1]) + "\t" + str(gene_mapped) + "\n"
+
+			if n_consensus_reads > n_consensus_reads_min:
+				out.write(result) # write consensus.seqeunce.gRNA.txt
+			out2.write(result) # write consensus.seqeunce.gRNA.all_umi.txt
 
 			consensus_seq = str(max_seq)
 			is_WT = str(dict_umi_seq[max_seq][1])
@@ -87,6 +98,7 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 			else:
 				consensus_2d[cb] = {umi: [consensus_seq, is_WT]}
 	out.close()
+	out2.close()
 
 	bam_out = pysam.AlignmentFile(output_dir + 'consensus.bam','wb', template = bam_in)
 	bam_out2 = pysam.AlignmentFile(output_dir + 'Non-consensus.bam','wb', template = bam_in)
@@ -102,7 +114,9 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 			continue
 		if umi == None: # no UMI
 			continue
+
 		consensus_seq = consensus_2d[cb][umi][0]
+		
 		is_WT = consensus_2d[cb][umi][1]
 		r.tags += [('WT',is_WT)]
 		
@@ -116,7 +130,6 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, is_10x
 		else:
 			print('What situation is this?')
 			exit()
-
 
 	
 
@@ -263,11 +276,13 @@ def generate_consensus_sequence(bam_in_file, barcode_in, region_chr, region_star
 				#print('=========================')
 				#print(dict_umi_seq)
 				for seq in all_seq_umi[1:]: # for each sequence of one same UMI, union them
+					#print("current seq:", seq)
 					positions_overlapped = dict_umi_seq[seq][2]
 					union_nreads = union_nreads + dict_umi_seq[seq][0]
 					for i,pos in enumerate(positions_overlapped):
-						#print("---------"+union_seq)
-						#print(union_positions)
+						#print(i,pos)
+						#print("union_seq:",union_seq)
+						#print("union_positons:",union_positions)
 						if pos == None: # when insertion / cliping happens 
 							if i != 0 or i != len(positions_overlapped): # not at the most left or most right
 								pos_left = positions_overlapped[i-1]
@@ -293,14 +308,15 @@ def generate_consensus_sequence(bam_in_file, barcode_in, region_chr, region_star
 								else:
 									sys.exit("Unkown ERROR")
 							else:
-								sys.exit("Insertion or clipling happens at the most left or right => skip")
+								print("Insertion or clipling happens at the most left or right => skip")
 								continue
 						union_left = union_positions[0]
 						union_right = union_positions[-1]
 
 						if union_left == None: # begin with insertion/cliping
-							sys.exit("Insertion or clipling happens at the most left => skip")
-							continue
+							#print("Insertion or clipling happens at the most left => skip") # updated 10 July
+							#continue
+							union_left = union_positions[1]
 						
 						tmp_i = -1
 						while(union_right == None): # end with insertion/cliping

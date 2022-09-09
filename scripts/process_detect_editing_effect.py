@@ -29,6 +29,7 @@ print('Detecing eiting effect start: ' + str(time_start) + '\n')
 (input_file, bam_file, barcode, cell_file, genome, gtf, output_dir, window_size) = utils.get_detect_editing_effect_config()
 (samtools, twoBitToFa, featureCounts) = utils.get_tools_config()
 
+
 print('Input gRNA region coorinates file: ' + input_file)
 print('Detection window size: ' + str(window_size) + 'bp')
 print('Output directory: ' + str(output_dir))
@@ -95,7 +96,7 @@ with open(fi_name, 'r') as fi:
 
 		cmd1 = '%s view -b %s %s:%s-%s > %s/region_bams/%s.bam' % (samtools, bam_file, chrom, start, end, output_dir, region_name)
 		subprocess.call(cmd1, shell = True)
-		# step 2 use umi_tools to annotate gene
+		# step 2 use featureCounts to annotate gene
 		cmd2 = '%s -a %s -o %s/region_bams/%s.gene_assigned -R BAM %s/region_bams/%s.bam -T 4 -g gene_name >/dev/null 2>&1' % (featureCounts, gtf, output_dir, region_name, output_dir, region_name) 
 		subprocess.call(cmd2, shell = True)
 		
@@ -111,4 +112,6 @@ with open(fi_name, 'r') as fi:
 		subprocess.call('rm ' + sub_bam_file, shell = True)
 
 fi.close()	
+subprocess.call('cat %s/region_bams/*.editing_effect.cutsite.txt > %s/all.editing_effect.cutsite.txt' % (output_dir, output_dir), shell = True)
+
 print('Detecing eiting effect finished! Cost time:  ' + str(datetime.now() - time_start) + '\n')

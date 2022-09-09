@@ -52,21 +52,58 @@ def detect_editing_effect(consensus_in_file, cut_site, cell_file):
 			result = l + "\t" + "No mutation\t" + KO_gene + "\n"
 			out.write(result)
 			continue
-	
-		if union_positions[0] < cut_site and union_positions[-1] > cut_site: # over cut site #TODO union_positions[0] <= cut_site and union_positions[-1] >= cut_site????
+		#print(l)
+		#print(union_positions)
+		#print(cut_site)
+		
+		# new version
+		left_pos = union_positions[0]
+		right_pos = union_positions[-1]
+		i = 0
+		while left_pos == None:
+			i = i + 1
+			left_pos = union_positions[i]
+		i = -1
+		while right_pos == None:
+			i = i - 1
+			right_pos = union_positions[i]
+
+		#print(union_positions)
+		#print(left_pos, right_pos)
+		
+		if left_pos < cut_site and right_pos > cut_site: # over cut site #TODO union_positions[0] <= cut_site and union_positions[-1] >= cut_site????
 			if cut_site not in union_positions or cut_site+1 not in union_positions or cut_site-1 not in union_positions:
 				result = l + "\t" + "Deletion at cutsite\t" + KO_gene + "\n"
-				out.write(result) # must mean insertion or deletion?
-			elif union_positions[-1] - union_positions[0] +1 != len(union_positions):
+				out.write(result) # must mean insertion or deletion
+			elif right_pos - left_pos +1 != len(union_positions):
 				result = l + "\t" + "Insertion/Deletion somewhere else\t"  + KO_gene + "\n"
 				out.write(result)
-			elif union_positions[-1] - union_positions[0] +1 == len(union_positions):
+			elif right_pos - left_pos +1 == len(union_positions):
 				result = l + "\t" + "Mismatch\t"  + KO_gene + "\n"
 				out.write(result)
 			else:
 				print("unseen type #TODO")
 				exit()
 		else: # sequence does not cover cut site
-			result = l + "\t" + "No cover\t"  + KO_gene + "\n" 
+			result = l + "\t" + "No cover\t"  + KO_gene + "\n"
 			out.write(result)
+
+
+		# old version:
+		#if union_positions[0] < cut_site and union_positions[-1] > cut_site: # over cut site #TODO union_positions[0] <= cut_site and union_positions[-1] >= cut_site????
+		#	if cut_site not in union_positions or cut_site+1 not in union_positions or cut_site-1 not in union_positions:
+		#		result = l + "\t" + "Deletion at cutsite\t" + KO_gene + "\n"
+		#		out.write(result) # must mean insertion or deletion?
+		#	elif union_positions[-1] - union_positions[0] +1 != len(union_positions):
+		#		result = l + "\t" + "Insertion/Deletion somewhere else\t"  + KO_gene + "\n"
+		#		out.write(result)
+		#	elif union_positions[-1] - union_positions[0] +1 == len(union_positions):
+		#		result = l + "\t" + "Mismatch\t"  + KO_gene + "\n"
+		#		out.write(result)
+		#	else:
+		#		print("unseen type #TODO")
+		#		exit()
+		#else: # sequence does not cover cut site
+		#	result = l + "\t" + "No cover\t"  + KO_gene + "\n" 
+		#	out.write(result)
 
