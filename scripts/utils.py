@@ -29,7 +29,14 @@ def get_read_tag(read, tag):
 
 
 def collapse_umi(reads):
-	#dict_2d[cb][umi]=[(seq, gene, cigar, is_WT, positions_overlapped)]
+	"""
+	Arg:
+		dict_2d[cb][umi]=[(seq, gene, cigar, is_WT, positions_overlapped)] for detect editing effect
+		dict_2d[cb][umi]=[(seq, gene, cigar, is_WT)] for gRNA mutation detection	
+	Return:
+		dictionary: out[num, is_WT] for gRNA mutation detection
+		dictionary: out[num, is_WT, positions_overlapped] for detect editing effect
+	"""
 	out ={}
 	if(len(reads) == 1):
 		seq = reads[0][0] # first record's sequence]
@@ -60,6 +67,45 @@ def collapse_umi(reads):
 
 		return out
 
+
+def collapse_umi_v2(reads, gene):
+	"""
+	Only count reads that aligned to specified gene
+	if specified gene is None, take all reads. 
+	if specified gene is 'multiple genes' (no consident mapped genes), take all reads 
+	Called by generate_consensus_sequence_gRNA
+	Arg:
+		dict_2d[cb][umi]=[(seq, gene, cigar, is_WT)] for gRNA mutation detection	
+		gene: specifed mapped gene, string, output of utils.which_mapped_gene
+	Return:
+		dictionary: out[num, is_WT] for gRNA mutation detection
+	"""
+	out ={}
+	if(len(reads) == 1):
+		seq = reads[0][0] # first record's sequence]
+		out[seq] = [1, reads[0][3]]
+		return out
+	else:
+		for read in reads:
+			seq = read[0]
+			mapped_gene = str(read[1]) # convert None to 'None'
+			if mapped_gene != gene and gene != 'multiple genes': # read mapped to different gene, not count
+				continue
+			is_WT = read[3]
+			if seq in out.keys():
+				try:
+					assert is_WT == out[seq][1]
+				except AssertionError:
+					print("AssertionError\n")
+					print(out)
+					print(read)
+					exit()
+				out[seq][0] += 1
+			else:
+				out[seq] = [1, is_WT]
+
+		return out
+
 def classify_umi(umi_seq):
 	if(len(umi_seq.keys()) == 1):
 		return 'single'
@@ -81,6 +127,30 @@ def collapse_mapped_gene(reads):
 			else:
 				dict[gene]=1
 		return dict
+
+def which_mapped_gene(gene_dict):
+	"""
+	Decide which mapped gene when UMI in CB with multiple aligned gene results.
+	The maximum reads supported results as mapped gene
+	When tie, label as multiple genes as the gene cannot be confidently assigned
+	Arg:
+		gene_dict: gene name as key, value: the number of reads mapped to this gene. return of utils.collapse_mapped_gene()
+	Return:
+		gene_mapped
+	"""
+	if len(gene_dict.keys()) == 1:
+		gene_mapped = str(list(gene_dict.keys())[0])
+		return gene_mapped
+	else:
+		#gene_mapped = 'multiple genes' # old version
+		gene_mapped = max(gene_dict, key = gene_dict.get) # maximum reads supported 
+		num_reads = gene_dict[gene_mapped]
+		gene_dict[gene_mapped] = 0 
+		if num_reads in gene_dict.values(): # tie 
+			return 'multiple genes'
+		else:
+			return str(gene_mapped)	
+
 #def filter_mapping_record():	
 
 
@@ -180,6 +250,52 @@ def gRNA_bam_filter(input_file, samtools, output_dir):
 	subprocess.call("%s view %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam|grep 'chrom' > %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.sam" % (samtools, tmp_dir, tmp_dir), shell = True)
 	subprocess.call("cat %s/header %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.sam > %s/tmp.sam" % (tmp_dir, tmp_dir, tmp_dir), shell = True)
 	subprocess.call('%s view -S -b %s/tmp.sam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, tmp_dir, output_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, output_dir), shell = True)
+	subprocess.call('rm -r ' + tmp_dir, shell = True)
+
+def gRNA_bam_filter_v2(input_file, ref_fasta, samtools, output_dir):
+
+	subprocess.call('mkdir -p ' + output_dir + '/_tmp', shell = True)
+	tmp_dir = output_dir + '/_tmp'
+	subprocess.call('%s sort %s > %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
+	subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+
+	subprocess.call('%s view -b -F 256 %s/gRNA.sorted.mapped.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir), shell = True)
+	fasta_sequences = SeqIO.parse(open(ref_fasta),'fasta')
+	for fasta in fasta_sequences:
+		oligo = fasta.id
+		subprocess.call("%s view %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam %s >> %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.sam" % (samtools, tmp_dir, oligo, tmp_dir), shell = True)
+	subprocess.call("cat %s/header %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.sam > %s/tmp.sam" % (tmp_dir, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s view -S -b %s/tmp.sam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, tmp_dir, output_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, output_dir), shell = True)
+	subprocess.call('rm -r ' + tmp_dir, shell = True)
+
+
+def gRNA_bam_filter_v3(input_file, ref_fasta, samtools, output_dir):
+
+	subprocess.call('mkdir -p ' + output_dir + '/_tmp', shell = True)
+	tmp_dir = output_dir + '/_tmp'
+	subprocess.call('%s sort %s > %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
+	#subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
+	#subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s view -b -F 4,256 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+
+	#subprocess.call('%s view -b -F 256 %s/gRNA.sorted.mapped.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir), shell = True)
+	fasta_sequences = SeqIO.parse(open(ref_fasta),'fasta')
+	cmd = samtools + ' merge -f ' + output_dir + '/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam'
+	for fasta in fasta_sequences:
+		oligo = fasta.id
+		subprocess.call("%s view %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam %s -b >> %s/%s.bam" % (samtools, tmp_dir, oligo, tmp_dir, oligo), shell = True)
+		cmd = cmd + ' ' + tmp_dir + '/' + oligo + '.bam'
+
+	subprocess.call(cmd, shell = True)
+	#subprocess.call("cat %s/header %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.sam > %s/tmp.sam" % (tmp_dir, tmp_dir, tmp_dir), shell = True)
+	#subprocess.call('%s view -S -b %s/tmp.sam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, tmp_dir, output_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam' % (samtools, output_dir), shell = True)
 	subprocess.call('rm -r ' + tmp_dir, shell = True)
 
@@ -573,5 +689,32 @@ def fit_gmm(log_umi):
 	gmm = GaussianMixture(n_components=2, covariance_type='tied').fit(log_umi)
 	
 	return gmm
+
+def lookup_barcodes():
+	"""
+	Lookup function to search cell barcodes in cell ranger translation lookup table
+	Especailly for cell ranger feature barcoding technology
+	When crispr capture library alignment does not correct cell barcode, then lookup in 3M-february-2018.txt.gz
+	Args:
+		Default lookup_table is 3M-february-2018.txt.gz from cellranger
+	Return:
+		barcodes: dictionary with GEX capture sequence barcode variant1 as value, and faeture barcoding capture sequence barcode variant2 as key
+		barcodes[cb2] = cb1
+	"""
+	infile = os.path.dirname(__file__) + '/3M-february-2018.txt'
+	barcodes = {}
+	with open(infile, 'r') as fi:
+		for l in fi:
+			ls = l.strip().split()
+			cb1 = ls[0]
+			cb2 = ls[1]
+			if cb2 not in barcodes.keys():
+				barcodes[cb2] = cb1
+			else:
+				print("duplicated cell barcode in lookup table")
+				print("Check",lookup_table)
+				exit(1)
+	return barcodes
+
 
 

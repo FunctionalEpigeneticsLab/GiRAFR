@@ -288,6 +288,7 @@ def call_gRNA_variant(output_dir, consensus_seq_file = 'consensus.sequence.gRNA.
 				mismatch_structure = identify_mismatch_structure(mismatch, structure, gene, variants[gene][seq])
 			except KeyError:
 				print("keyError")
+				print(variants[gene][seq])
 				print(l, gene, seq)
 				exit()
 			out_line = l + "\t" + variant_nr +":"+mismatch + "\t" + (',').join(mismatch_structure) + "\n"

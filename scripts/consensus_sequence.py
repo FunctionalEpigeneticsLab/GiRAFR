@@ -25,11 +25,15 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 	gene_tag = 'GN'if is_10x else 'gn'
 
 	barcodes = utils.read_barcode(barcode_in) # filtered barcode in list
+	print('Total filtered barcodes: ', len(barcodes))
 	bam_in = utils.create_bam_infile(bam_in_file)
 	out_file = output_dir + 'consensus.sequence.gRNA.txt'
 	out_file2 = output_dir + 'consensus.sequence.gRNA.all_umi.txt'
 	out = open(out_file,'w')
 	out2 = open(out_file2, 'w')
+
+	if is_10x: # cell barcodes discrepancy between gene expression library and crispr capture library, especially for feature barcoding technology
+		lookup_barcodes = utils.lookup_barcodes()
 
 	dict_2d={}
 	# Read all records
@@ -48,7 +52,14 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 		if is_10x & bool(cb):
 			cb = cb.replace('-1','')
 		if cb not in barcodes:
-			continue # skip cells which are not in filtered barcode list
+			if is_10x and cb in lookup_barcodes.keys():
+				cb1 = lookup_barcodes[cb] 
+				if cb1 in barcodes: # really not  filtered cell barcodes
+					cb = cb1 # corrected cell barcodes =>new CB
+				else:
+					continue	
+			else:
+				continue # skip cells which are not in filtered barcode list
 		if cb in dict_2d.keys():
 			if umi in dict_2d[cb].keys():
 				dict_2d[cb][umi].append((seq, gene, cigar, is_WT))
@@ -57,6 +68,7 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 		else:
 			dict_2d[cb] = {umi: [(seq, gene, cigar, is_WT)]}
 	
+	print(str(len(dict_2d.keys())) + "\tcells in filtered barcodes list")
 	header = "#\t"+str(len(dict_2d.keys()))+"\tCells processed\n"
 	out.write(header)
 	
@@ -64,7 +76,12 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 	for cb in dict_2d.keys():
 		#print(len(dict_2d[cb].keys())) # number of UMI in the cell
 		for umi in dict_2d[cb].keys():
-			dict_umi_seq = utils.collapse_umi(dict_2d[cb][umi])
+			#dict_umi_seq = utils.collapse_umi(dict_2d[cb][umi])
+
+			gene = utils.collapse_mapped_gene(dict_2d[cb][umi])
+			gene_mapped = utils.which_mapped_gene(gene) # When multiple aligned genes, take the one with most reads. 
+			dict_umi_seq = utils.collapse_umi_v2(dict_2d[cb][umi], gene_mapped) # count reads that mapped tp gene_mapped
+			
 			try:
 				max_seq = max(dict_umi_seq, key = dict_umi_seq.get) # most frequent sequence
 			except TypeError:
@@ -72,12 +89,8 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 				print(umi,cb)
 				print(dict_2d[cb][umi])
 				continue
+			
 			umi_class = utils.classify_umi(dict_umi_seq)
-			gene = utils.collapse_mapped_gene(dict_2d[cb][umi])
-			if len(gene.keys()) == 1:
-				gene_mapped = str(list(gene.keys())[0])
-			else:
-				gene_mapped = 'multiple gene'    # for UMI mapped to multiple gene, use most high quality one? #TODO
 
 			n_consensus_reads = dict_umi_seq[max_seq][0] # number of reads that support consensus sequence
 			result = str(cb) + "\t" + str(umi) + "\t" + str(len(dict_2d[cb].keys())) + "\t" + str(len(dict_2d[cb][umi])) + "\t" + str(umi_class) + "\t"+ str(max_seq) + "\t" + str(n_consensus_reads) + "\t" + str(dict_umi_seq[max_seq][1]) + "\t" + str(gene_mapped) + "\n"
@@ -100,18 +113,26 @@ def generate_consensus_sequence_gRNA(bam_in_file, barcode_in, output_dir, n_cons
 	out.close()
 	out2.close()
 
+	bam_in = utils.create_bam_infile(bam_in_file)
 	bam_out = pysam.AlignmentFile(output_dir + 'consensus.bam','wb', template = bam_in)
 	bam_out2 = pysam.AlignmentFile(output_dir + 'Non-consensus.bam','wb', template = bam_in)
-	bam_in = utils.create_bam_infile(bam_in_file)
 	flag = False # mean this value has been recorded
 	for r in bam_in:
 		seq = r.query_sequence	
-		cb = utils.get_read_tag(r, cb_tag) # for now, assume its after corrected ### TODO
-		umi = utils.get_read_tag(r, umi_tag) # for now, assume its after corrected ### TODO
+		cb = utils.get_read_tag(r, cb_tag) 
+		umi = utils.get_read_tag(r, umi_tag) 
 		if is_10x & bool(cb):
 			cb = cb.replace('-1','')
-		if cb not in consensus_2d.keys(): # cell barcode not in metadata, meaning its not in filtered barcode list
-			continue
+		if cb not in consensus_2d.keys(): 
+			if is_10x and cb in lookup_barcodes.keys():
+				cb1 = lookup_barcodes[cb] # corrected cell barcodes =>new CB 
+				if cb1 in consensus_2d.keys(): # really not  filtered cell barcodes
+					cb = cb1
+					r.set_tag('UB', cb)
+				else:
+					continue
+			else:
+				continue # cell barcode not in metadata, meaning its not in filtered barcode list
 		if umi == None: # no UMI
 			continue
 
