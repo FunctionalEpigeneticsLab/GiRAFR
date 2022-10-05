@@ -282,7 +282,7 @@ def gRNA_bam_filter_v3(input_file, ref_fasta, samtools, output_dir):
 	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
 	#subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
 	#subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
-	subprocess.call('%s view -b -F 4,256 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
+	subprocess.call('%s view -b -F 4 -F 256 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
 
 	#subprocess.call('%s view -b -F 256 %s/gRNA.sorted.mapped.bam > %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.mapped.removedSecondaryAlignment.bam' % (samtools, tmp_dir), shell = True)

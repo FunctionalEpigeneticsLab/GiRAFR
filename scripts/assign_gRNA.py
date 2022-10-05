@@ -400,22 +400,22 @@ def add_variant_type(in_file1, in_file2, in_file3, structure_gtf, output_dir):
 			ls = l.strip().split()
 			if len(ls) == 5: # only WT
 				continue
-			gRNA = ls[5]
-			
-			if gRNA not in variants: #TODO, CHD1L_gRNA2_gene_variant_20  64M27S
-				continue
-			else:
-				mutation = variants[gRNA][0] # gRNA:6I(1),Rest:8D(1)
-				if bool(re.search('_WT', gRNA)):
+			for index in range(5, len(ls), 2): # fix bug 30 Sep
+				gRNA = ls[index]
+				if gRNA not in variants: #TODO, CHD1L_gRNA2_gene_variant_20  64M27S
 					continue
-				gRNA_gene = re.split('_variant', gRNA)[0]
-				mutations = mutation.split(',')
-				for m in mutations:
-					s =  m.split(':')[0]
-					relative_pos = int(re.findall('(\d+)(.+)',m.split(':')[1])[0][0]) + 1
-					mutation = re.findall('(\d+)(.+)',m.split(':')[1])[0][1]
-					length = int(structure[gRNA_gene][s][2]) - int(structure[gRNA_gene][s][1]) + 1
-					out_line = gRNA_gene + '\t' + s + '\t'+ str(length) + '\t'+ str(relative_pos) + '\t' + mutation + '\t' + gRNA
-					out3.write(out_line + '\n')
+				else:
+					mutation = variants[gRNA][0] # gRNA:6I(1),Rest:8D(1)
+					if bool(re.search('_WT', gRNA)):
+						continue
+					gRNA_gene = re.split('_variant', gRNA)[0]
+					mutations = mutation.split(',')
+					for m in mutations:
+						s =  m.split(':')[0]
+						relative_pos = int(re.findall('(\d+)(.+)',m.split(':')[1])[0][0]) + 1
+						mutation = re.findall('(\d+)(.+)',m.split(':')[1])[0][1]
+						length = int(structure[gRNA_gene][s][2]) - int(structure[gRNA_gene][s][1]) + 1
+						out_line = gRNA_gene + '\t' + s + '\t'+ str(length) + '\t'+ str(relative_pos) + '\t' + mutation + '\t' + gRNA
+						out3.write(out_line + '\n')
 				
-				variants.pop(gRNA) # remove the gRNA variant which has been written
+					variants.pop(gRNA) # remove the gRNA variant which has been written

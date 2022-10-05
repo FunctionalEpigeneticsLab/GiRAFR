@@ -16,15 +16,4 @@ print('gRNA mutation profiling:', str(time_start),'\n')
 (samtools, twoBitToFa, featureCounts) = utils.get_tools_config()
 (gRNA_bam_file, barcode, output_dir, n_consensus_reads_min, min_umi, auto, pool, ref_fasta, structure_gtf, is_10x) = utils.get_gRNA_mutation_config()
 
-######## Filtering of mapped reads ########
-#utils.gRNA_bam_filter(gRNA_bam_file, samtools, output_dir) # time consuming
-#print('Prepare bam file. Cost time: ' + str(datetime.now() - time_start) + '\n' )
-
-#time_start = datetime.now()
-#utils.gRNA_bam_filter_v2(gRNA_bam_file, ref_fasta, samtools, output_dir) # time consuming
-#print('Prepare bam file. Cost time: ' + str(datetime.now() - time_start) + '\n' )
-
-
-time_start = datetime.now()
-utils.gRNA_bam_filter_v3(gRNA_bam_file, ref_fasta, samtools, output_dir) # time consuming
-print('Prepare bam file. Cost time: ' + str(datetime.now() - time_start) + '\n' )
+assign_gRNA.assign_gRNA_to_cell(in_file = output_dir + 'consensus.sequence.gRNA.variant.txt', min_umi = min_umi, output_dir = output_dir, auto = auto, pool = pool)
