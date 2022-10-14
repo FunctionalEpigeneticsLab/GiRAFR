@@ -36,7 +36,7 @@ with open(gemgroup_file, 'r') as fi:
 				gRNA = ls2[8]
 				gRNA_variant = ls2[9] # ALKBH1_gRNA1_gene_variant_1:21M1D21M2D48M
 				gRNA_mutation = ls2[10] # TSO:26D(1)
-				if num == 1: # initialise by input the first consensus.sequence.gRNA.variant.txt
+				if num == 1: # initialise by input the first consensus.sequence.gRNA.variant.txt, generate gRNA_all[gRNA][gRNA_mutation] = gRNA_type
 					ls2[0] = cb + '-' + str(num)
 					out.write('\t'.join(ls2))
 					out.write('\n')
@@ -77,8 +77,7 @@ with open(gemgroup_file, 'r') as fi:
 						else:
 							new_num = 0
 							gRNA_types = []
-							for i in gRNA_all.keys():
-								gRNA_types.append(gRNA_all[i].values())
+							gRNA_types = gRNA_all[gRNA].values()
 							while True:
 								new_num = new_num +1
 								gRNA_type = gRNA + '_variant_' + str(new_num)
