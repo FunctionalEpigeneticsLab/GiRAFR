@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
 	name="girafr",  
-	version="1.0.0", 
+	version="1.0.6", 
 	description="A package to detect mutations and CRISPR-Cas9 editing effects in single cell CRISPR screens", 
 	long_description=long_description, 
 	long_description_content_type="text/markdown",  
@@ -27,19 +27,19 @@ setup(
 		"Programming Language :: Python :: 3 :: Only",
 	],
 	keywords="gRNA, mutation, single cell CRISPR screen", 
-	package_dir={"": "scripts"},  
+	packages=find_packages(),
 	python_requires=">=3.7, <4",
 	install_requires=[
 		"pysam",
 		"Bio",
 		"sklearn",
-		"pandas",
+		"pandas >=1.0.0, ==1.*",
 		"numpy"],  
 	entry_points={
 		"console_scripts": [
 			"girafr = girafr.__main__:main",
 		]
-	}
+	},
 	project_urls={  
 		"Bug Reports": "https://github.com/FunctionalEpigeneticsLab/GiRAFR/issues",
 		"Source": "https://github.com/FunctionalEpigeneticsLab/GiRAFR",
