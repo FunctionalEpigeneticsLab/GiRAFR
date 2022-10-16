@@ -11,10 +11,13 @@ import girafr.editing_effect
 import sys
 
 def run(argv):
-	if argv not in command_strings:
-		print('Unknown command', argv)
+	if len(argv) != 1:
+		print('Usage: girafr gRNA_mutation or girafr editing_effect')
+	if argv[0] not in command_strings:
+		print('Unknown command', argv[0])
+		print('Usage: girafr gRNA_mutation or girafr editing_effect')
 		sys.exit(2)
-	if argv == 'gRNA_mutation':
+	if argv[0] == 'gRNA_mutation':
 		girafr.gRNA_mutation.run()
 	else:
 		girafr.editing_effect.run()

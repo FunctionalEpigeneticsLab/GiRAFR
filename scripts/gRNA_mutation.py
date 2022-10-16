@@ -1,13 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import os
-import utils
+from . import utils
 import pysam
 import subprocess
-import consensus_sequence
+from . import consensus_sequence
 from datetime import datetime
-import variant
-import assign_gRNA
+from . import variant
+from . import assign_gRNA
 import configparser
 import sys
 

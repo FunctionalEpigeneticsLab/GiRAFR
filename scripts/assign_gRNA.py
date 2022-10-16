@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-import utils
+from . import utils
 import numpy as np
 import re
 

@@ -1,0 +1,23 @@
+# For repo #
+dist/
+
+# For Python #
+##############
+
+*.pyc
+__pycache__/
+.cache/
+.pytest_cache
+girafr.egg-info/
+
+# OS generated files #
+######################
+.DS_Store
+
+# autosave #
+############
+*~
+
+# jupyter notebook #
+####################
+.ipynb_checkpoints

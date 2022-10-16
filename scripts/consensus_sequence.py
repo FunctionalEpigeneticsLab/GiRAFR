@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import gzip
-import utils
+from . import utils
 import sys
 import pysam
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 metadata = open('/staging/leuven/stg_00064/projects/cropseq/267genes/develop/custom/apply_to_deep2/metadata.variant.txt','r')
 

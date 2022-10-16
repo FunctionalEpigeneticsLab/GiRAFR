@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 with open('cells.gRNA.txt','r') as fi:
 	num_cells = 0 
