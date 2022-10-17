@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
 	name="girafr",  
-	version="1.0.7", 
+	version="1.0.9", 
 	description="A package to detect mutations and CRISPR-Cas9 editing effects in single cell CRISPR screens", 
 	long_description=long_description, 
 	long_description_content_type="text/markdown",  
@@ -35,6 +35,9 @@ setup(
 		"sklearn",
 		"pandas >=1.0.0, ==1.*",
 		"numpy"],  
+	package_data = {
+		"girafr": ["3M-february-2018.txt"],
+	},
 	entry_points={
 		"console_scripts": [
 			"girafr = girafr.__main__:main",
