@@ -23,12 +23,14 @@ GiRAFR has two subcommands: ``gRNA_mutation`` and ``editing_effect``
 
 * Create configuration file **ConfigFile**, see :ref:`create configuration file to detect gRNA mutation <configuration_gRNA>` and :ref:`create configuration file to detect editing effect <configuration_editing>`
 
-* Profile gRNA mutation in Single cell CRIPSR screen:
-.. code-block:: bash
+* Profile gRNA mutation in Single cell CRIPSR screen
         
+.. code-block:: bash
+
         girafr gRNA_mutation -f path/ConfigFile
 
 * Detect CRISPR-Cas9 editting effect in single cell RNA-seq:
+
 .. code-block:: bash
         
         girafr editing_effect -f path/ConfigFile
