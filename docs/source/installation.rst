@@ -5,7 +5,8 @@ Installation
 
 GiRAFR installation:
 
-.. code-block:: console
+.. code-block:: bash
 
-        (.venv) $ pip install girafr
+        pip install girafr
+
 

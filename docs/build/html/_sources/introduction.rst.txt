@@ -19,7 +19,8 @@ Scheme
 Quickstart
 ----------
 
-GiRAFR has two modules: detect gRNA mutation and CRIPSR-Cas9 editing effect 
+GiRAFR has two subcommands: ``gRNA_mutation`` and ``editing_effect``
+
 * Create configuration file **ConfigFile**, see :ref:`create configuration file to detect gRNA mutation <configuration_gRNA>` and :ref:`create configuration file to detect editing effect <configuration_editing>`
 
 * Profile gRNA mutation in Single cell CRIPSR screen:

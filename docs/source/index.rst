@@ -18,10 +18,3 @@ Welcome to GiRAFR's documentation!
    editing_effect
    output
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
