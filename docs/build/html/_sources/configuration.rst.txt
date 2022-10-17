@@ -1,0 +1,30 @@
+Usage
+=====
+
+.. _installation :
+
+Installation
+------------
+
+GiRAFR installation:
+
+.. code-block:: bash
+
+   $ pip install girafr
+
+Configuration
+-------------
+
+configuration file preparation, 
+
+see example
+
+gRNA mutation profile
+---------------------
+
+.. code-block:: bash
+
+   $ girafr gRNA_mutation
+
+
+

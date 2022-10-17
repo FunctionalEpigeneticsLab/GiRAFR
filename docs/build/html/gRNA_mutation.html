@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single cell CRISPR screen gRNA library mutation profiling &#8212; GiRAFR 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Detect CRISPR Cas9 editing effect" href="editing_effect.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="single-cell-crispr-screen-grna-library-mutation-profiling">
+<h1>Single cell CRISPR screen gRNA library mutation profiling<a class="headerlink" href="#single-cell-crispr-screen-grna-library-mutation-profiling" title="Permalink to this heading">¶</a></h1>
+<div class="section" id="configuration">
+<span id="configuration-grna"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">¶</a></h2>
+<p>Prepare <strong>ConfigFile</strong> for girafr gRNA_mutation.</p>
+<p>see example</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">gRNA_bam_file</span></code></dt><dd><p>gRNA library alignment bam file, mapped to custom reference with gRNA as artificial chromosome (starting ‘_chrom’)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">filtered_barcode</span></code></dt><dd><p>filtered barcode list of expression library mapping results (unzipped).
+Cellranger corrected cell barcodes (CB tag) is saved as filtered barcodes in the cellranger output. Two alignments can cause cellranger correct same cell barcodes in different ways and cause less cell pass bam filter.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">min_reads</span></code></dt><dd><p>Integer number. By default = 1. UMIs with less than min_reads will be filtered out.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">auto</span></code></dt><dd><p>Boolean. By default is True.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pool</span></code></dt><dd><p>Boolean. By default is True</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>samtools</p></li>
+<li><p>2bit genome downloaded from UCSC</p></li>
+</ul>
+<p>All coordinates need to be 1-based</p>
+</div>
+<div class="section" id="grna-mutation-profile">
+<h2>gRNA mutation profile<a class="headerlink" href="#grna-mutation-profile" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>girafr gRNA_mutation -f path/ConfigFile
+</pre></div>
+</div>
+</div>
+<div class="section" id="simplified-process">
+<h2>Simplified process<a class="headerlink" href="#simplified-process" title="Permalink to this heading">¶</a></h2>
+<ul>
+<li><dl class="simple">
+<dt>Step1 (utils.gRNA_bam_filter):</dt><dd><p>gRNA bam file filtration.
+Script will remove secondary alignments and those which are not aligned to designed gRNA cassette.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Step2 (consensus_sequence.generate_consensus_sequence_gRNA):</dt><dd><p>Next, script will construct consensus sequence for each UMI. We take the most reads supported sequence as the consensus sequence for the UMI.
+Arg:</p>
+<blockquote>
+<div><p>bam_in: bam file, alignment file of gRNA library after removed secondary alignment and mapped not on gRNA reference
+barcodes: filtered barcode list</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Return:</dt><dd><p>consensus.sequence.gRNA.txt: consensus sequence supported by column 7 (n_consensus_reads) &gt; 1
+consensus.seqeunce.gRNA.all_umi.txt: all UMI detected consensus sequence
+consensus.bam: consensus sequence in bam file format
+Non- consensus.bam: alignment not the same as consensus sequence</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Step3 (variant.call_gRNA_variant): call gRNA mutation from consensus.bam.</dt><dd><p>Then, we compare consensus sequence of each UMI with its reference and annotate where the mutation is by structure annotation. Variances are encoded in a similar way like CIGAR in sam format.
+Arg:</p>
+<blockquote>
+<div><p>consensus_seq_file: consensus.sequence.gRNA.txt
+ref_fasta: oligo_pool_plasmid.fa
+structure_gtf: oligo_pool_plasmid_structure.gtf</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Return:</dt><dd><p>consensus.sequence.gRNA.variant.txt</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Step4 (assign_gRNA.assign_gRNA_to_cell): Assign gRNA to cell.</dt><dd><p>In the end, we assign found guides to cells. It is required for a cell to have more than min_umi molecule of gRNA so that the script will assign the gRNA to that cell. This umi threshold can be defined by min_umi as fixed threshold for all guides or it can be automatically calculated by fitting a two model mixed gaussian model when auto is set as true in the configuration file.
+Args:</p>
+<blockquote>
+<div><p>in_file: consensus.sequence.gRNA.variant.txt
+min_umi: minum number of UMI, default is 3
+auto: boolean, whether use autodetection or fixed min_umi, default is false
+pool: boolean, whether calculate min umi thresholds together with variant gRNA of the same guide, default is false</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Return:</dt><dd><p>Write cells.gRNA.txt and cells.gRNA.single.txt
+consensus.sequence.matrix
+gRNA.umi.threshold.txt</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Step5 (optional): (assign_gRNA.add_variant_type, profile_MT_pattern.py) add mutation details for downstream analysis.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>in_file1: consensus.sequence.gRNA.variant.txt
+in_file2: cells.gRNA.single.txt
+in_file3: cells.gRNA.txt</p>
+</dd>
+<dt>Return:</dt><dd><p>Write: cells.gRNA.single.MT.txt, MT.txt and all.MT.txt</p>
+</dd>
+</dl>
+<p>profile_MT_pattern.py
+Args:</p>
+<blockquote>
+<div><p>in_file: consensus.sequence.gRNA.variant.txt
+min_umi2: ninum number of umi for certain Variant to be profiled</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Return:</dt><dd><p>Write consensus.sequence.gRNA.MT.txt</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="output-files">
+<h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this heading">¶</a></h2>
+<p>See section</p>
+</div>
+<div class="section" id="additional-information">
+<h2>Additional information<a class="headerlink" href="#additional-information" title="Permalink to this heading">¶</a></h2>
+<p>Build custom reference (optional):
+Oligo_pool.csv: two columns: oligo_name and sequence, no header.
+prepare.py: generate oligo_pool_plasmid.fa, oligo_pool_plasmid.gtf and oligo_pool_plasmid_structure.gtf
+This part gives instruction to build a custom CellRanger reference with designed cassette as artificial chromosome. utils.write_annotation function generates oligo_pool_plasmid.fa and oligo_pool_plasmid.gtf which will be used to generate cellranger reference (see build note as example), and oligo_pool_plasmid_structure.gtf which will be used to profile where the mutations are on the cassatte.</p>
+<dl class="simple">
+<dt>CIGAR-like string:</dt><dd><p>Digit numbers represents exact matches, and nucleotides followed are mutated bases. 0 represents no nucleotide.
+Digit numbers followed by insertions (I), deletions (D) and soft clippings (S) show the number of nucleotides of those events. Hard clippings (H) are not included. The major difference between this string and CIGAR-string is it replaces matches (M) into mismatches and encode detailed mutated nucleotides [ATGC] into the string.</p>
+</dd>
+<dt>Mutation structure annotation:</dt><dd><p>Annotations begin with oligo structures such as gRNA which are consistent with user input oligo_pool_plasmid_structure.gtf. Then each mutation annotation follows oligo structure with semicolon as separator. Comma separates individual mutation event. Digit numbers represents the distance to the beginning of the structure. Nucleotides followed are mutated bases. 0 represents no nucleotide. Digit numbers in bracket followed insertions (I), deletions (D) and soft clippings (S) represent the number of nucleotides of those events.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">GiRAFR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Single cell CRISPR screen gRNA library mutation profiling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grna-mutation-profile">gRNA mutation profile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simplified-process">Simplified process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-files">Output files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#additional-information">Additional information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="editing_effect.html">Detect CRISPR Cas9 editing effect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output.html">Output file format</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="editing_effect.html" title="next chapter">Detect CRISPR Cas9 editing effect</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Qian Yu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.2.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/gRNA_mutation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
