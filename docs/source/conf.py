@@ -30,5 +30,4 @@ html_static_path = ['_static']
 
 root_doc = 'index'
 
-
 html_theme = "sphinx_rtd_theme"
