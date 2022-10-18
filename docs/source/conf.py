@@ -14,7 +14,8 @@ release = '1.0.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+import sphinx_rtd_theme
+extensions = ['sphinx_rtd_theme']
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -27,4 +28,7 @@ exclude_patterns = []
 html_theme = 'alabaster'
 html_static_path = ['_static']
 
-master_doc = 'index'
+root_doc = 'index'
+
+
+html_theme = "sphinx_rtd_theme"
