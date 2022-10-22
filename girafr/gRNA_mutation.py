@@ -24,6 +24,7 @@ def run(config):
 		print("No configuration file found under current folder. See documentation.")
 		sys.exit(2)
 
+	print("Output folder: " + str(output_dir))
 	######## Filtering of mapped reads ########
 	utils.gRNA_bam_filter(gRNA_bam_file, samtools, output_dir) # time consuming
 	print('Prepare bam file. Cost time: ' + str(datetime.now() - time_start) + '\n' )

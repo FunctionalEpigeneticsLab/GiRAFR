@@ -1,12 +1,29 @@
-####input information
+#### Example configuration file
+# change path, more details see documentation input files
+# https://girafr.readthedocs.io/en/latest/
 
+[config_tools] 
+samtools = /data/leuven/334/vsc33470/miniconda3/bin/samtools
+twoBitToFa = /staging/leuven/stg_00064/tools/ucsc/twoBitToFa
+featureCounts = /data/leuven/334/vsc33470/miniconda3/envs/umi_tools/bin/featureCounts
 
+[config_annotation]
+ref_fasta = absolute_path_to_this_file/oligo_pool_plasmid.fa
+structure_gtf= absolute_path_to_this_file/oligo_pool_plasmid_structure.gtf
+genome = absolute_path_to_this_file/hg38.2bit # 2bit file downloaded from UCSC
+genome_gtf = absolute_path_to_this_file/Homo_sapiens.GRCh38.93.gtf # gtf file from ensembl
+gRNA_region = absolute_path_to_this_file/gRNA_region_coordinates_hg38.txt # required by editing_effect command
 
-[configFile]
-samtools=/data/leuven/334/vsc33470/miniconda3/bin/samtools
-bam_file=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep/gRNA.bam
-barcode=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep/barcodes.tsv
-output_dir=/staging/leuven/stg_00064/projects/cropseq/267genes/develop/paper/exp2_deep
-ref_fasta=oligo_pool_plasmid.fa
-structure_gtf=oligo_pool_plasmid_structure.gtf
+[config_gRNA_mutation]
+gRNA_bam_file = absolute_path_to_this_file/bam_file
+filtered_barcode= absolute_path_to_this_file/barcode.tsv # unzipped
+output_dir= absolute_path_to_output_folder
+auto = True 
+pool = True
 
+[config_detect_editing_effect]
+expression_bam_file = absolute_path_to_this_file/possorted_genome_bam.bam # output from cellranger 
+filtered_barcode = absolute_path_to_this_file/barcode.tsv # unzipped
+cell_file = absolute_path_to_this_file/cells.gRNA.txt # cell assignment results by gRNA_mutation command or protospacer_call_per_cell by cellranger
+output_dir = absolute_path_to_output_folder
+window_size = 81 # recommended 
