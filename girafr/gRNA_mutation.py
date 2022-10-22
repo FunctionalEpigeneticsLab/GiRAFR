@@ -12,13 +12,14 @@ import configparser
 import sys
 
 
-def run():
+def run(config):
 	time_start = datetime.now()
 	print('gRNA mutation profiling:', str(time_start),'\n')
 
 	try:
-		(samtools, twoBitToFa, featureCounts) = utils.get_tools_config()
-		(gRNA_bam_file, barcode, output_dir, n_consensus_reads_min, min_umi, auto, pool, ref_fasta, structure_gtf, is_10x) = utils.get_gRNA_mutation_config()
+		config_file = config
+		(samtools, twoBitToFa, featureCounts) = utils.get_tools_config(config_file)
+		(gRNA_bam_file, barcode, output_dir, n_consensus_reads_min, min_umi, auto, pool, ref_fasta, structure_gtf, is_10x) = utils.get_gRNA_mutation_config(config_file)
 	except configparser.NoSectionError:
 		print("No configuration file found under current folder. See documentation.")
 		sys.exit(2)

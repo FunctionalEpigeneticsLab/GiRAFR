@@ -5,20 +5,21 @@ command_strings = [
 	"gRNA_mutation",
 	"editing_effect"]
 
-#COMMANDS = [importlib.import_module('girafr.process_gRNA_mutation', 'girafr.process_detect_editing_effect')]
+import argparse
 import girafr.gRNA_mutation
 import girafr.editing_effect
 import sys
 
-def run(argv):
-	if len(argv) != 1:
-		print('Usage: girafr gRNA_mutation or girafr editing_effect')
-	if argv[0] not in command_strings:
-		print('Unknown command', argv[0])
-		print('Usage: girafr gRNA_mutation or girafr editing_effect')
-		sys.exit(2)
-	if argv[0] == 'gRNA_mutation':
-		girafr.gRNA_mutation.run()
-	else:
-		girafr.editing_effect.run()
 
+parser = argparse.ArgumentParser(description='GiRAFR.')
+parser.add_argument('command', default = "gRNA_mutation", choices = ["gRNA_mutation","editing_effect"], help = "command gRNA_mutation or editing_effect (default: %(default)s)")
+parser.add_argument('--config', '-c', default="ConfigFile", help="configuration file (default: %(default)s)")
+args = parser.parse_args()
+
+def run(args):
+	if args.command == 'gRNA_mutation':
+		girafr.gRNA_mutation.run(args.config)
+	else:
+		girafr.editing_effect.run(args.config)
+
+run(args)

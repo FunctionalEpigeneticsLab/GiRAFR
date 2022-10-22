@@ -8,14 +8,14 @@ from . import consensus_sequence
 from . import detect_cut_site
 from Bio import SeqIO
 
-def run():
+def run(config):
 	time_start = datetime.now()
 
 	print('Detecing eiting effect start: ' + str(time_start) + '\n')
 
 
-	(input_file, bam_file, barcode, cell_file, genome, gtf, output_dir, window_size) = utils.get_detect_editing_effect_config()
-	(samtools, twoBitToFa, featureCounts) = utils.get_tools_config()
+	(input_file, bam_file, barcode, cell_file, genome, gtf, output_dir, window_size) = utils.get_detect_editing_effect_config(config_file)
+	(samtools, twoBitToFa, featureCounts) = utils.get_tools_config(config_file)
 
 
 	print('Input gRNA region coorinates file: ' + input_file)

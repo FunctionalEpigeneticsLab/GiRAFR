@@ -241,7 +241,7 @@ def gRNA_bam_filter(input_file, samtools, output_dir):
 	"""
 	subprocess.call('mkdir -p ' + output_dir + '/_tmp', shell = True)
 	tmp_dir = output_dir + '/_tmp'
-	subprocess.call('%s sort %s > %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
+	subprocess.call('%s sort %s -o %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
 	subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
 	subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
@@ -257,7 +257,7 @@ def gRNA_bam_filter_v2(input_file, ref_fasta, samtools, output_dir):
 
 	subprocess.call('mkdir -p ' + output_dir + '/_tmp', shell = True)
 	tmp_dir = output_dir + '/_tmp'
-	subprocess.call('%s sort %s > %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
+	subprocess.call('%s sort %s -o %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
 	subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
 	subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
@@ -278,7 +278,7 @@ def gRNA_bam_filter_v3(input_file, ref_fasta, samtools, output_dir):
 
 	subprocess.call('mkdir -p ' + output_dir + '/_tmp', shell = True)
 	tmp_dir = output_dir + '/_tmp'
-	subprocess.call('%s sort %s > %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
+	subprocess.call('%s sort %s -o %s/gRNA.sorted.bam' % (samtools, input_file, tmp_dir), shell = True)
 	subprocess.call('%s index %s/gRNA.sorted.bam' % (samtools, tmp_dir), shell = True)
 	#subprocess.call('%s view -H %s/gRNA.sorted.bam > %s/header' % (samtools, tmp_dir, tmp_dir), shell = True)
 	#subprocess.call('%s view -b -F 4 %s/gRNA.sorted.bam > %s/gRNA.sorted.mapped.bam' % (samtools, tmp_dir, tmp_dir), shell = True)
@@ -552,9 +552,10 @@ def read_gRNA_reference(ref_fasta = 'oligo_pool_plasmid.fa', structure_gtf = 'ol
 	return ref_dict
 
 
-def get_gRNA_mutation_config():
+def get_gRNA_mutation_config(config_file):
 	parser = configparser.ConfigParser()
-	ConfigFile = os.getcwd() + '/ConfigFile'
+	#ConfigFile = os.getcwd() + '/ConfigFile'
+	ConfigFile = config_file
 	parser.read(ConfigFile)
 	gRNA_bam_file = parser.get('config_gRNA_mutation', 'gRNA_bam_file')
 	barcode = parser.get('config_gRNA_mutation', 'filtered_barcode')
@@ -591,9 +592,10 @@ def get_gRNA_mutation_config():
 		is_10x = True # set default is_10x as True
 	return(gRNA_bam_file, barcode, output_dir, n_consensus_reads_min, min_umi, auto, pool, ref_fasta, structure_gtf, is_10x)
 
-def get_tools_config():
+def get_tools_config(config_file):
 	parser = configparser.ConfigParser()
-	ConfigFile = os.getcwd() + '/ConfigFile'
+	#ConfigFile = os.getcwd() + '/ConfigFile'
+	ConfigFile = config_file
 	parser.read(ConfigFile)
 	samtools = parser.get('config_tools', 'samtools')
 	twoBitToFa = parser.get('config_tools', 'twoBitToFa')
