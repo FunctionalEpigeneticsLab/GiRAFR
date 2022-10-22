@@ -602,11 +602,12 @@ def get_tools_config(config_file):
 	featureCounts = parser.get('config_tools', 'featureCounts')
 	return(samtools, twoBitToFa, featureCounts)
 
-def get_detect_editing_effect_config():
+def get_detect_editing_effect_config(config_file):
 	parser = configparser.ConfigParser()
-	ConfigFile = os.getcwd() + '/ConfigFile'
+	#ConfigFile = os.getcwd() + '/ConfigFile'
+	ConfigFile = config_file
 	parser.read(ConfigFile)
-	input_file = parser.get('config_annotation', 'gRNA_region')
+	input_file = parser.get('config_detect_editing_effect', 'gRNA_region')
 	bam_file = parser.get('config_detect_editing_effect', 'expression_bam_file')
 	barcode = parser.get('config_detect_editing_effect', 'filtered_barcode')
 	cell_file = parser.get('config_detect_editing_effect', 'cell_file')

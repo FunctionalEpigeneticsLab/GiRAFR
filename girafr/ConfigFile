@@ -12,7 +12,6 @@ ref_fasta = absolute_path_to_this_file/oligo_pool_plasmid.fa
 structure_gtf= absolute_path_to_this_file/oligo_pool_plasmid_structure.gtf
 genome = absolute_path_to_this_file/hg38.2bit # 2bit file downloaded from UCSC
 genome_gtf = absolute_path_to_this_file/Homo_sapiens.GRCh38.93.gtf # gtf file from ensembl
-gRNA_region = absolute_path_to_this_file/gRNA_region_coordinates_hg38.txt # required by editing_effect command
 
 [config_gRNA_mutation]
 gRNA_bam_file = absolute_path_to_this_file/bam_file
@@ -22,6 +21,7 @@ auto = True
 pool = True
 
 [config_detect_editing_effect]
+gRNA_region = absolute_path_to_this_file/gRNA_region_coordinates_hg38.txt # required by editing_effect command
 expression_bam_file = absolute_path_to_this_file/possorted_genome_bam.bam # output from cellranger 
 filtered_barcode = absolute_path_to_this_file/barcode.tsv # unzipped
 cell_file = absolute_path_to_this_file/cells.gRNA.txt # cell assignment results by gRNA_mutation command or protospacer_call_per_cell by cellranger
