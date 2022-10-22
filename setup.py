@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
 	name="girafr",  
-	version="1.1.0", 
+	version="1.1.1", 
 	description="A package to detect mutations and CRISPR-Cas9 editing effects in single cell CRISPR screens", 
 	long_description=long_description, 
 	long_description_content_type="text/markdown",  
