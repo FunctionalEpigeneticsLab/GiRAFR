@@ -12,10 +12,14 @@ def run(config):
 	time_start = datetime.now()
 
 	print('Detecing eiting effect start: ' + str(time_start) + '\n')
-
-
-	(input_file, bam_file, barcode, cell_file, genome, gtf, output_dir, window_size) = utils.get_detect_editing_effect_config(config_file)
-	(samtools, twoBitToFa, featureCounts) = utils.get_tools_config(config_file)
+	
+	try:
+		config_file = config
+		(input_file, bam_file, barcode, cell_file, genome, gtf, output_dir, window_size) = utils.get_detect_editing_effect_config(config_file)
+		(samtools, twoBitToFa, featureCounts) = utils.get_tools_config(config_file)
+	except configparser.NoSectionError:
+		print("No configuration file found under current folder. See documentation.")
+		sys.exit(2)
 
 
 	print('Input gRNA region coorinates file: ' + input_file)

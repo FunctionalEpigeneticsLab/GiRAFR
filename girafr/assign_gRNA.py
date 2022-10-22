@@ -148,8 +148,8 @@ def detect_gRNA_umi_thresolds_pool(output_dir, in_file = 'consensus.count.matrix
 
 				if  gRNA_target not in gRNA: # current gRNA variant is not for the same gRNA target gene (includes no wild type for this guide exists)
 					if not (gRNA_umi_counts == np.zeros(cell_number)).all(): # calculate previous gRNA target
-						print('calculate previous gRNA targte:', gRNA_target)
-						print(gRNA_target, end = '\t')
+						#print('calculate previous gRNA targte:', gRNA_target)
+						#print(gRNA_target, end = '\t')
 						#for x in gRNA_umi_counts:
 						#	print(x, end = '\t')
 						#print('\n')
