@@ -77,68 +77,251 @@
   <div class="section" id="output-file-format">
 <h1>Output file format<a class="headerlink" href="#output-file-format" title="Permalink to this heading"></a></h1>
 <div class="section" id="grna-mutation">
-<h2>gRNA_mutation<a class="headerlink" href="#grna-mutation" title="Permalink to this heading"></a></h2>
-<p>consensus.bam: Bam file contains consensus sequence alignment result for each UMI.
-consensus.sequence.gRNA.variant.txt:
-Column 1: Cell barcode
-Column 2: UMI
-Column 3: Number of UMI in the cell
-Column 4: Number of reads for this UMI (default min = 1)
-Column 5: single/multiple. Single refers to UMI with only one type of sequence. Multiple refers to UMI with more than one type of sequence.
-Column 6: Consensus sequence. Sequence with most reads supported.
-Column 7: Number of reads that support the consensus sequence.
-Column 8: True/False. True: wild type sequence. False: different from reference.
-Column 9: Name of the guide. ‘multiple gene’: when UMI mapped to multiple guides with equal number of reads. The progam cannot assign gene to UMI confidently. In this case, UMI will be skipped later.
-Column 10: Guide variant type with detailed mismatch information
-Column 11: Mutation structure annotation</p>
-<p>cells.gRNA.txt
-Column 1: Cell barcode
-Column 2: Number of guides in the cell
-Column 3: Guide name.
-Column 4: WT: Intact gRNA
-Column 5: Number of UMI support wild type guide
-Column 6: Guide variant type if exist.
-Column 7: Number of UMI support mutant guide.</p>
-<p>cells.gRNA.single.txt: Cells with only one guide
-Column 1: Cell barcode
-Column 2: 1 as only one guide in the cell
-Column 3: Guide name. Guide name ends with WT represents wild type.
-Column 4: Number of UMI support mutant guide.</p>
-<p>cells.gRNA.single.MT.txt
-Column 1 – Column 4: same as cells.gRNA.single.txt
-Column 5: Mutation details. None when wildtype or soft clipping only.
-Column 6: Mutant sequence. None when wildtype or soft clipping only.</p>
-<p>MT.txt: mutations in single cell in a long format, each line contains single mutation event.
-Column 1: target gene
-Column 2: structure (defined in structure.gtf)
-Column 3: length of the structure
-Column 4: Position on the structure
-Column 5: mutation (CIGAR similar format)
-Column 6: variant name with number suffix.</p>
-<p>all.MT.txt: mutations of all in-cell guides same format as MT.txt. An important difference is multiple cells with the same variant guide will be recorded once in this file, but multiple times in MT.txt.
-consensus.sequence.gRNA.MT.txt: same format as all.MT.txt but for all mutations in consensus.sequence.gRNA.variant.txt including guides that are not detected in cells. Variants with at least 2 UMIs will be recorded. Each variant only appears once in this file.</p>
+<span id="output"></span><h2>gRNA_mutation<a class="headerlink" href="#grna-mutation" title="Permalink to this heading"></a></h2>
+<p>consensus.bam:
+Bam file contains consensus sequence alignment result for each UMI.</p>
+<p>consensus.sequence.gRNA.variant.txt</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1</p></td>
+<td><p>Cell barcode</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 2</p></td>
+<td><p>UMI</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 3</p></td>
+<td><p>Number of UMI in the cell</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 4</p></td>
+<td><p>Number of reads for this UMI (default min = 1)</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 5</p></td>
+<td><p>single/multiple. Single refers to UMI with only one type of sequence. Multiple refers to UMI with more than one type of sequence.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 6</p></td>
+<td><p>Consensus sequence. Sequence with most reads supported.</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 7</p></td>
+<td><p>Number of reads that support the consensus sequence.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 8</p></td>
+<td><p>True/False. True: wild type sequence. False: different from reference.</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 9</p></td>
+<td><p>Name of the guide. ‘multiple gene’: when UMI mapped to multiple guides with equal number of reads. The progam cannot assign gene to UMI confidently. In this case, UMI will be skipped later.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 10</p></td>
+<td><p>Guide variant type with detailed mismatch information</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 11</p></td>
+<td><p>Mutation structure annotation</p></td>
+</tr>
+</tbody>
+</table>
+<p>cells.gRNA.txt</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1</p></td>
+<td><p>Cell barcode</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 2</p></td>
+<td><p>Number of guides in the cell</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 3</p></td>
+<td><p>Guide name.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 4</p></td>
+<td><p>WT: Intact gRNA</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 5</p></td>
+<td><p>Number of UMI support wild type guide</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 6</p></td>
+<td><p>Guide variant type if exist.</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 7</p></td>
+<td><p>Number of UMI support mutant guide.</p></td>
+</tr>
+</tbody>
+</table>
+<p>cells.gRNA.single.txt: cells with only one gRNA</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1</p></td>
+<td><p>Cell barcode</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 2</p></td>
+<td><p>1 as only one guide in the cell</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 3</p></td>
+<td><p>Guide name. Guide name ends with WT represents wild type.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 4</p></td>
+<td><p>Number of UMI support mutant guide.</p></td>
+</tr>
+</tbody>
+</table>
+<p>cells.gRNA.single.MT.txt</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1 to Column 4</p></td>
+<td><p>same as cells.gRNA.single.txt</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 5</p></td>
+<td><p>Mutation details. None when wildtype or soft clipping only.</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 6</p></td>
+<td><p>Mutant sequence. None when wildtype or soft clipping only.</p></td>
+</tr>
+</tbody>
+</table>
+<p>all.MT.txt: mutations in single cell in a long format, each line contains single mutation event.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1</p></td>
+<td><p>target gene</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 2</p></td>
+<td><p>structure (defined in structure.gtf)</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 3</p></td>
+<td><p>length of the structure</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 4</p></td>
+<td><p>Position on the structure</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 5</p></td>
+<td><p>mutation (<a class="reference internal" href="gRNA_mutation.html#cigar-string"><span class="std std-ref">CIGAR similar format</span></a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 6</p></td>
+<td><p>variant name with number suffix.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="editing-effect">
 <h2>editing_effect<a class="headerlink" href="#editing-effect" title="Permalink to this heading"></a></h2>
 <p>For each gRNA:
-{region_name}.bam: alignment within detection window
-{region_name}.bam.featureCounts.sorted.bam: FeatureCount assigned reads to gene.
-{region_name}.consensus.sequence.txt: Consensus sequence within detection window for each UMI and cell.
-Column 1: cell barcode
-Column 2: UMI
-Column 3: Number of UMI for cell
-Column 4: Number of sequences for that UMI
-Column 5: reference sequence in the detection window
-Column 6: union sequence for that UMI in the detection window
-Column 7: union number of reads
-Column 8: Boolean True for wildtype sequence, false for mutation exist in sequence
-Column 9: mapped gene
-Column 10: mapped positions on the genome
-Column 11: is_umi_seq_different
-Column 12: reference gRNA id (region_name)</p>
-<p>{region_name}.editing_effect.cutsite.txt:
-Column 13: mutation, ‘No mutation’ given when wildtype sequence. “Deletion at cutsite”, “Insertion/Deletion somewhere else”, “Mismatch”
-Column 14: gRNA assigned to this cell</p>
+<code class="docutils literal notranslate"><span class="pre">{region_name}.bam</span></code>: alignment within detection window
+<code class="docutils literal notranslate"><span class="pre">{region_name}.bam.featureCounts.sorted.bam</span></code>: FeatureCount assigned reads to gene.
+<code class="docutils literal notranslate"><span class="pre">{region_name}.consensus.sequence.txt</span></code>: Consensus sequence within detection window for each UMI and cell.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1</p></td>
+<td><p>cell barcode</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 2</p></td>
+<td><p>UMI</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 3</p></td>
+<td><p>Number of UMI for cell</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 4</p></td>
+<td><p>Number of sequences for that UMI</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 5</p></td>
+<td><p>reference sequence in the detection window</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 6</p></td>
+<td><p>union sequence for that UMI in the detection window</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 7</p></td>
+<td><p>union number of reads</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 8</p></td>
+<td><p>Boolean True for wildtype sequence, false for mutation exist in sequence</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 9</p></td>
+<td><p>mapped gene</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 10</p></td>
+<td><p>mapped positions on the genome</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 11</p></td>
+<td><p>is_umi_seq_different</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 12</p></td>
+<td><p>reference gRNA id (region_name)</p></td>
+</tr>
+</tbody>
+</table>
+<p>{region_name}.editing_effect.cutsite.txt</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>column number</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Column 1 to Column 12</p></td>
+<td><p>same as {region_name}.consensus.sequence.txt</p></td>
+</tr>
+<tr class="row-odd"><td><p>Column 13</p></td>
+<td><p>mutation, ‘No mutation’ given when wildtype sequence. “Deletion at cutsite”, “Insertion/Deletion somewhere else”, “Mismatch”</p></td>
+</tr>
+<tr class="row-even"><td><p>Column 14</p></td>
+<td><p>gRNA assigned to this cell</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 

@@ -46,7 +46,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#grna-mutation-profile">gRNA mutation profile</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#simplified-process">Simplified process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simplified-process">Simplified process</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#utils.gRNA_bam_filter"><code class="docutils literal notranslate"><span class="pre">utils.gRNA_bam_filter()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#output-files">Output files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#additional-information">Additional information</a></li>
 </ul>
@@ -84,7 +87,7 @@
 <div class="section" id="configuration">
 <span id="configuration-grna"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h2>
 <p>Prepare <strong>ConfigFile</strong> for girafr gRNA_mutation.</p>
-<p>see example</p>
+<p>see example <a class="reference external" href="https://github.com/FunctionalEpigeneticsLab/GiRAFR/blob/main/girafr/ConfigFile">ConfigFile</a></p>
 <dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">gRNA_bam_file</span></code></dt><dd><p>gRNA library alignment bam file, mapped to custom reference with gRNA as artificial chromosome (starting ‘_chrom’)</p>
 </dd>
@@ -93,9 +96,16 @@ Cellranger corrected cell barcodes (CB tag) is saved as filtered barcodes in the
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">min_reads</span></code></dt><dd><p>Integer number. By default = 1. UMIs with less than min_reads will be filtered out.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">auto</span></code></dt><dd><p>Boolean. By default is True.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">auto</span></code></dt><dd><p>Boolean. When True, girafr will fit model to determine UMI threshold for each gRNA. When False, fixed min_umi will be used. By default is True.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">pool</span></code></dt><dd><p>Boolean. By default is True</p>
+<dt><code class="docutils literal notranslate"><span class="pre">min_umi</span></code></dt><dd><p>Integer number. By default = 3. Cells with UMIs &gt;= min_umi will be assigned with gRNA. Not used when auto is True.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pool</span></code></dt><dd><p>Boolean. By default is True. When True, girafr will pool both intact UMIs and UMIs with mutation together to determine UMI threshold for each gRNA. When False, girafr will give UMI threshold seperately for intact and mutated gRNA.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ref_fasta</span></code></dt><dd><p>refence gRNA cassette sequence.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">genome_gtf</span></code></dt><dd><p>gRNA cassette annotation in gtf format.
+<code class="docutils literal notranslate"><span class="pre">ref_fasta</span></code> and <code class="docutils literal notranslate"><span class="pre">genome_gtf</span></code> should be also used to build reference genome, to which the gRNA library sequence is mapped. See <a class="reference internal" href="#build"><span class="std std-ref">build</span></a> for more information.</p>
 </dd>
 </dl>
 </div>
@@ -105,92 +115,100 @@ Cellranger corrected cell barcodes (CB tag) is saved as filtered barcodes in the
 <li><p>samtools</p></li>
 <li><p>2bit genome downloaded from UCSC</p></li>
 </ul>
-<p>All coordinates need to be 1-based</p>
 </div>
 <div class="section" id="grna-mutation-profile">
 <h2>gRNA mutation profile<a class="headerlink" href="#grna-mutation-profile" title="Permalink to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>girafr gRNA_mutation -f path/ConfigFile
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>girafr gRNA_mutation -f absolute_path/ConfigFile
 </pre></div>
 </div>
 </div>
 <div class="section" id="simplified-process">
 <h2>Simplified process<a class="headerlink" href="#simplified-process" title="Permalink to this heading"></a></h2>
-<ul>
+<ul class="simple">
+<li><p>step 1: gRNA bam file filtration.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.gRNA_bam_filter">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">gRNA_bam_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samtools_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#utils.gRNA_bam_filter" title="Permalink to this definition"></a></dt>
+<dd><p>Script will remove secondary alignments and those which are not aligned to designed gRNA cassette. This step is time consuming.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<em>string</em>) – input file gRNA library alignments by cellranger or dropseq_tools</p></li>
+<li><p><strong>samtools_path</strong> (<em>string</em>) – path to samtools</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>generate filtered bam file in output folder named as <code class="docutils literal notranslate"><span class="pre">gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<ul class="simple">
+<li><p>Step2: Construct consensus sequence for each UMI-Cell barcode combination</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">consensus_sequence.generate_consensus_sequence_gRNA(bam_in,</span> <span class="pre">barcodes):</span></span></dt>
+<dd><p>Next, script will construct consensus sequence for each UMI. We take the most reads supported sequence as the consensus sequence for the UMI. More details see methods in citation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bam_in</strong> (<em>string</em>) – path to bam file, alignment file of gRNA library after removed secondary alignment and mapped not on gRNA reference <code class="docutils literal notranslate"><span class="pre">gRNA.sorted.mapped.removedSecondaryAlignment.onlyMappedToGrnaChrom.bam</span></code></p></li>
+<li><p><strong>barcodes</strong> (<em>string</em>) – filtered barcode list, unzipped file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>file: <code class="docutils literal notranslate"><span class="pre">consensus.sequence.gRNA.txt</span></code>: consensus sequence supported by more than min_reads (default = 1) reads.
+<code class="docutils literal notranslate"><span class="pre">consensus.seqeunce.gRNA.all_umi.txt</span></code>: all UMI detected consensus sequence, including UMI with only min_reads (default = 1) read.
+<code class="docutils literal notranslate"><span class="pre">consensus.bam</span></code>: consensus sequence in bam file format.
+<code class="docutils literal notranslate"><span class="pre">Non-consensus.bam</span></code>: alignment not the same as consensus sequence.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<ul class="simple">
+<li><p>Step3: Call mutations from <code class="docutils literal notranslate"><span class="pre">consensus.bam</span></code>:</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">variant.call_gRNA_variant(consensus_seq_file,</span> <span class="pre">ref_fasta,</span> <span class="pre">structure_gtf):</span></span></dt>
+<dd><p>Then, we compare consensus sequence of each UMI with its reference and annotate where the mutation is by structure annotation. Variances are encoded in a similar way like CIGAR in sam format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>consensus_seq_file</strong> (<em>string</em>) – <code class="docutils literal notranslate"><span class="pre">consensus.sequence.gRNA.txt</span></code> generated by previous step</p></li>
+<li><p><strong>ref_fasta</strong> (<em>string</em>) – path to file: <code class="docutils literal notranslate"><span class="pre">oligo_pool_plasmid.fa</span></code>, specified in ConfigFile</p></li>
+<li><p><strong>structure_gtf</strong> (<em>string</em>) – path to file <code class="docutils literal notranslate"><span class="pre">oligo_pool_plasmid_structure.gtf</span></code>, specified in ConfigFile</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>file: <code class="docutils literal notranslate"><span class="pre">consensus.sequence.gRNA.variant.txt</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<ul class="simple">
+<li><p>Step4: Assign gRNAs to cells</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">assign_gRNA.assign_gRNA_to_cell():</span></span></dt>
+<dd><p>In the end, we assign found guides to cells. It is required for a cell to have more than min_umi molecule of gRNA so that the script will assign the gRNA to that cell. This umi threshold can be defined by min_umi as fixed threshold for all guides or it can be automatically calculated by fitting a two model mixed gaussian model when auto is set as true in the configuration file.
+:param string in_file: file <code class="docutils literal notranslate"><span class="pre">consensus.sequence.gRNA.variant.txt</span></code> generated by previous step
+:param integer min_umi: minum number of UMI, default is 3
+:param boolean auto: boolean, whether use autodetection or fixed min_umi, default is false
+:param boolean pool: boolean, whether calculate min umi thresholds together with variant gRNA of the same guide, default is false
+:return: Write <code class="docutils literal notranslate"><span class="pre">cells.gRNA.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">cells.gRNA.single.txt</span></code></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">consensus.sequence.matrix</span></code>
+<code class="docutils literal notranslate"><span class="pre">gRNA.umi.threshold.txt</span></code></p>
+</div></blockquote>
+</dd></dl>
+
+<ul class="simple">
 <li><dl class="simple">
-<dt>Step1 (utils.gRNA_bam_filter):</dt><dd><p>gRNA bam file filtration.
-Script will remove secondary alignments and those which are not aligned to designed gRNA cassette.</p>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>Step2 (consensus_sequence.generate_consensus_sequence_gRNA):</dt><dd><p>Next, script will construct consensus sequence for each UMI. We take the most reads supported sequence as the consensus sequence for the UMI.
-Arg:</p>
-<blockquote>
-<div><p>bam_in: bam file, alignment file of gRNA library after removed secondary alignment and mapped not on gRNA reference
-barcodes: filtered barcode list</p>
-</div></blockquote>
-<dl class="simple">
-<dt>Return:</dt><dd><p>consensus.sequence.gRNA.txt: consensus sequence supported by column 7 (n_consensus_reads) &gt; 1
-consensus.seqeunce.gRNA.all_umi.txt: all UMI detected consensus sequence
-consensus.bam: consensus sequence in bam file format
-Non- consensus.bam: alignment not the same as consensus sequence</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>Step3 (variant.call_gRNA_variant): call gRNA mutation from consensus.bam.</dt><dd><p>Then, we compare consensus sequence of each UMI with its reference and annotate where the mutation is by structure annotation. Variances are encoded in a similar way like CIGAR in sam format.
-Arg:</p>
-<blockquote>
-<div><p>consensus_seq_file: consensus.sequence.gRNA.txt
-ref_fasta: oligo_pool_plasmid.fa
-structure_gtf: oligo_pool_plasmid_structure.gtf</p>
-</div></blockquote>
-<dl class="simple">
-<dt>Return:</dt><dd><p>consensus.sequence.gRNA.variant.txt</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>Step4 (assign_gRNA.assign_gRNA_to_cell): Assign gRNA to cell.</dt><dd><p>In the end, we assign found guides to cells. It is required for a cell to have more than min_umi molecule of gRNA so that the script will assign the gRNA to that cell. This umi threshold can be defined by min_umi as fixed threshold for all guides or it can be automatically calculated by fitting a two model mixed gaussian model when auto is set as true in the configuration file.
-Args:</p>
-<blockquote>
-<div><p>in_file: consensus.sequence.gRNA.variant.txt
-min_umi: minum number of UMI, default is 3
-auto: boolean, whether use autodetection or fixed min_umi, default is false
-pool: boolean, whether calculate min umi thresholds together with variant gRNA of the same guide, default is false</p>
-</div></blockquote>
-<dl class="simple">
-<dt>Return:</dt><dd><p>Write cells.gRNA.txt and cells.gRNA.single.txt
-consensus.sequence.matrix
-gRNA.umi.threshold.txt</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</li>
-<li><dl>
-<dt>Step5 (optional): (assign_gRNA.add_variant_type, profile_MT_pattern.py) add mutation details for downstream analysis.</dt><dd><dl class="simple">
-<dt>Args:</dt><dd><p>in_file1: consensus.sequence.gRNA.variant.txt
-in_file2: cells.gRNA.single.txt
-in_file3: cells.gRNA.txt</p>
-</dd>
-<dt>Return:</dt><dd><p>Write: cells.gRNA.single.MT.txt, MT.txt and all.MT.txt</p>
-</dd>
-</dl>
-<p>profile_MT_pattern.py
-Args:</p>
-<blockquote>
-<div><p>in_file: consensus.sequence.gRNA.variant.txt
-min_umi2: ninum number of umi for certain Variant to be profiled</p>
-</div></blockquote>
-<dl class="simple">
-<dt>Return:</dt><dd><p>Write consensus.sequence.gRNA.MT.txt</p>
-</dd>
-</dl>
+<dt>Step5 (optional):</dt><dd><p>Functions <cite>assign_gRNA.add_variant_type</cite> and <cite>profile_MT_pattern.py</cite> add mutation details for downstream analysis.</p>
 </dd>
 </dl>
 </li>
@@ -198,21 +216,25 @@ min_umi2: ninum number of umi for certain Variant to be profiled</p>
 </div>
 <div class="section" id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this heading"></a></h2>
-<p>See section</p>
+<p>See section <a class="reference internal" href="output.html#output"><span class="std std-ref">output files formats</span></a></p>
 </div>
 <div class="section" id="additional-information">
-<h2>Additional information<a class="headerlink" href="#additional-information" title="Permalink to this heading"></a></h2>
-<p>Build custom reference (optional):
-Oligo_pool.csv: two columns: oligo_name and sequence, no header.
-prepare.py: generate oligo_pool_plasmid.fa, oligo_pool_plasmid.gtf and oligo_pool_plasmid_structure.gtf
-This part gives instruction to build a custom CellRanger reference with designed cassette as artificial chromosome. utils.write_annotation function generates oligo_pool_plasmid.fa and oligo_pool_plasmid.gtf which will be used to generate cellranger reference (see build note as example), and oligo_pool_plasmid_structure.gtf which will be used to profile where the mutations are on the cassatte.</p>
-<dl class="simple">
-<dt>CIGAR-like string:</dt><dd><p>Digit numbers represents exact matches, and nucleotides followed are mutated bases. 0 represents no nucleotide.
-Digit numbers followed by insertions (I), deletions (D) and soft clippings (S) show the number of nucleotides of those events. Hard clippings (H) are not included. The major difference between this string and CIGAR-string is it replaces matches (M) into mismatches and encode detailed mutated nucleotides [ATGC] into the string.</p>
-</dd>
-<dt>Mutation structure annotation:</dt><dd><p>Annotations begin with oligo structures such as gRNA which are consistent with user input oligo_pool_plasmid_structure.gtf. Then each mutation annotation follows oligo structure with semicolon as separator. Comma separates individual mutation event. Digit numbers represents the distance to the beginning of the structure. Nucleotides followed are mutated bases. 0 represents no nucleotide. Digit numbers in bracket followed insertions (I), deletions (D) and soft clippings (S) represent the number of nucleotides of those events.</p>
-</dd>
-</dl>
+<span id="cigar-string"></span><span id="build"></span><h2>Additional information<a class="headerlink" href="#additional-information" title="Permalink to this heading"></a></h2>
+<p><a href="#id1"><span class="problematic" id="id2">**</span></a>Build custom reference (optional): **</p>
+<p>Oligo_pool.csv: two columns: oligo_name and sequence, no header.
+prepare.py: generate <code class="docutils literal notranslate"><span class="pre">oligo_pool_plasmid.fa</span></code>, <code class="docutils literal notranslate"><span class="pre">oligo_pool_plasmid.gtf</span></code> and <code class="docutils literal notranslate"><span class="pre">oligo_pool_plasmid_structure.gtf</span></code></p>
+<blockquote>
+<div><p>This part gives instruction to build a custom CellRanger reference with designed cassette as artificial chromosome. utils.write_annotation function generates oligo_pool_plasmid.fa and oligo_pool_plasmid.gtf which will be used to generate cellranger reference (see build note as example), and oligo_pool_plasmid_structure.gtf which will be used to profile where the mutations are on the cassatte. This script is modified from .._code: <a class="reference external" href="https://github.com/epigen/crop-seq">https://github.com/epigen/crop-seq</a></p>
+</div></blockquote>
+<p><strong>CIGAR-like string:</strong></p>
+<ul class="simple">
+<li><p>Digit numbers represents exact matches, and nucleotides followed are mutated bases. 0 represents no nucleotide.</p></li>
+<li><p>Digit numbers followed by insertions (I), deletions (D) and soft clippings (S) show the number of nucleotides of those events. Hard clippings (H) are not included. The major difference between this string and CIGAR-string is it replaces matches (M) into mismatches and encode detailed mutated nucleotides [ATGC] into the string.</p></li>
+</ul>
+<p><a href="#id3"><span class="problematic" id="id4">**</span></a>Mutation structure annotation: **</p>
+<ul class="simple">
+<li><p>Annotations begin with oligo structures such as gRNA which are consistent with user input oligo_pool_plasmid_structure.gtf. Then each mutation annotation follows oligo structure with semicolon as separator. Comma separates individual mutation event. Digit numbers represents the distance to the beginning of the structure. Nucleotides followed are mutated bases. 0 represents no nucleotide. Digit numbers in bracket followed insertions (I), deletions (D) and soft clippings (S) represent the number of nucleotides of those events.</p></li>
+</ul>
 </div>
 </div>
 
