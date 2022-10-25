@@ -17,6 +17,12 @@ Novel single cell RNA-seq analysis combined with CRISPR screens enables the high
 
 # Citation
 
+GiRAFR improves gRNA detection and annotation in single cell CRISPR screens  
+Qian Yu, Paulien Van Minsel, Eva Galle, Bernard Thienpont  
+bioRxiv 2022.10.24.513352; doi: https://doi.org/10.1101/2022.10.24.513352
+
+
+
 # License and copyright
 
 
