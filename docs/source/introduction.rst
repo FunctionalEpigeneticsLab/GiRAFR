@@ -35,6 +35,8 @@ To create configuration file ``ConfigFile``, see :ref:`create configuration file
 
         girafr gRNA_mutation -c abosolute_path/ConfigFile 
 
+GiRAFR takes alignment results (bam file) as its main input. It is best compatible to Cell Ranger alignment output. Therefore, it can be used as downstream analysis after Cell Ranger alignments to provide cell annotations before the transcriptome analysis. GiRAFR is also compatible to Drop-seq toolbox and other alignment results by simply modifying its configuration (tag information).
+
 * Detect CRISPR-Cas9 editting effect in single cell RNA-seq:
 
 .. code-block:: bash
@@ -42,4 +44,14 @@ To create configuration file ``ConfigFile``, see :ref:`create configuration file
         girafr editing_effect -c absolute_path/ConfigFile
 
 If no -c/--config is used, girafr will try ``ConfigFile`` in the current path.
+
+
+Scalability and Runtime
+-----------------------
+The runtime of GiRAFR is determined by the sequencing depth and the number of cells in gRNA library. Below figure shows the correlation between GiRAFR runtime and the product of cells number and reads number using down-sampled inhouse CROP-seq data.  
+
+.. image:: scalability.png
+   :height: 200px
+   :widgth:200px
+   :align:left
 
