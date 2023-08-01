@@ -10,3 +10,13 @@ GiRAFR installation:
         pip install girafr
         girafr -h
 
+Dependencies:
+
+python >=3.7, <4
+pysam
+Bio
+sklearn
+pandas
+numpy
+
+Others: samtools, twoBitToFa
