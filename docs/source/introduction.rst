@@ -52,6 +52,6 @@ The runtime of GiRAFR is determined by the sequencing depth and the number of ce
 
 .. image:: scalability.png
    :height: 200px
-   :widgth:200px
-   :align:left
+   :width: 200px
+   :align: left
 
